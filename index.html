@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>irie – saving memories</title>
+  <meta name="description" content="irie is a simple online photobooth. Take photos, pick a layout, download your strip.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="nav glass">
+  <button class="logo" data-go="home" aria-label="irie home">irie</button>
+  <nav aria-label="Main">
+    <button data-go="home">Home</button>
+    <button data-go="booth">Photobooth</button>
+  </nav>
+  <button id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme">◐</button>
+</header>
+
+<main>
+
+  <!-- HOME -->
+  <section id="home" class="screen">
+    <div class="hero">
+      <div class="hero-text">
+        <h1><span class="hl hl-pink">crismiel</span> and <span class="hl hl-purple">irish</span> own little photobooth</h1>
+        <p class="tagline">saving memories</p>
+        <p class="lead">Take a few photos, pick a layout, download your strip. Everything stays on your device.</p>
+        <div class="cta">
+          <button id="startBtnHome" class="btn primary big">Start Photobooth</button>
+          <button id="uploadBtnHome" class="btn ghost big">Upload Photos</button>
+        </div>
+        <p class="flow">Capture → Customize → Download</p>
+      </div>
+      <div class="hero-stack" aria-hidden="true">
+        <canvas id="heroA"></canvas>
+        <canvas id="heroB"></canvas>
+        <canvas id="heroC"></canvas>
+      </div>
+    </div>
+
+    <div class="block">
+      <h2>Pick a style</h2>
+      <div id="homeStyles" class="layouts big-thumbs"></div>
+    </div>
+  </section>
+
+  <!-- BOOTH -->
+  <section id="booth" class="screen" hidden>
+    <div class="booth-grid">
+      <div id="stageWrap" class="stage-wrap">
+        <div id="stage" class="stage">
+          <video id="video" playsinline muted autoplay></video>
+          <div id="progress" class="progress" aria-live="polite"></div>
+          <div id="countdown" class="countdown" aria-live="assertive"></div>
+          <div id="flash" class="flash"></div>
+          <div id="camMsg" class="cam-msg" hidden>
+            <p id="camMsgText"></p>
+            <div class="row">
+              <button id="retryCam" class="btn primary">Try again</button>
+              <button id="uploadFromMsg" class="btn ghost">Upload photos instead</button>
+            </div>
+          </div>
+          <button id="fsBtn" class="icon-btn glass stage-fs" aria-label="Fullscreen">⛶</button>
+          <div class="shutter">
+            <button id="startBtn" class="btn primary big">Take photos</button>
+            <button id="cancelBtn" class="btn ghost big" hidden>Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <aside class="panel glass" id="boothPanel">
+        <div id="layoutBlock">
+          <h3>Layout</h3>
+          <div id="boothLayouts" class="layouts"></div>
+        </div>
+        <label>Countdown
+          <select id="countdownSel">
+            <option value="0">None</option>
+            <option value="3">3 seconds</option>
+            <option value="5">5 seconds</option>
+            <option value="10">10 seconds</option>
+          </select>
+        </label>
+        <label>Delay between photos
+          <select id="delaySel">
+            <option value="1">1 second</option>
+            <option value="2">2 seconds</option>
+            <option value="3">3 seconds</option>
+            <option value="5">5 seconds</option>
+          </select>
+        </label>
+        <label id="cameraRow" hidden>Camera
+          <select id="cameraSel"></select>
+        </label>
+        <div class="row">
+          <button id="flipBtn" class="btn ghost" hidden>Flip camera</button>
+          <label class="check"><input type="checkbox" id="mirrorChk"> Mirror</label>
+          <label class="check"><input type="checkbox" id="muteChk"> Mute sound</label>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  <!-- REVIEW -->
+  <section id="review" class="screen" hidden>
+    <div class="center-col">
+      <h2>Happy with your photos?</h2>
+      <p class="sub">Retake any shot, or continue to customize.</p>
+      <div id="reviewGrid" class="review-grid"></div>
+      <div class="row center">
+        <button id="retakeAll" class="btn ghost big">Retake all</button>
+        <button id="reviewContinue" class="btn primary big">Continue</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDIT / DOWNLOAD -->
+  <section id="edit" class="screen" hidden>
+    <div class="edit-grid">
+      <div class="preview"><canvas id="outCanvas"></canvas></div>
+      <aside class="panel glass">
+        <div>
+          <h3>Layout</h3>
+          <div id="editLayouts" class="layouts"></div>
+        </div>
+        <div>
+          <h3>Background</h3>
+          <div class="swatches" id="swatches"></div>
+        </div>
+        <div id="builtinControls" class="stack">
+          <label>Photo spacing
+            <input type="range" id="gapRange" min="0" max="60" step="2">
+          </label>
+          <label class="check"><input type="checkbox" id="roundChk"> Rounded corners</label>
+          <label>Caption
+            <input type="text" id="captionInp" maxlength="40" placeholder="Add a caption">
+          </label>
+          <label class="check"><input type="checkbox" id="dateChk"> Add date</label>
+        </div>
+        <label>Download size
+          <select id="sizeSel">
+            <option value="1200">Standard (1200 px wide)</option>
+            <option value="1800">High (1800 px wide)</option>
+          </select>
+        </label>
+        <button id="downloadBtn" class="btn primary big">Download PNG</button>
+        <p class="hint">On iPhone, the image opens in a new tab. Press and hold it to save.</p>
+        <div class="row">
+          <button id="backReview" class="btn ghost">Back to photos</button>
+          <button id="newSession" class="btn ghost">New photobooth</button>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+</main>
+
+<input type="file" id="fileInput" accept="image/*" multiple hidden>
+<div id="toast" class="toast" role="status"></div>
+
+<script src="app.js"></script>
+</body>
+</html>
