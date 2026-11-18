@@ -7,7 +7,7 @@
   <meta name="description" content="irie is a simple online photobooth. Take photos, pick a layout, download your strip.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Pacifico&family=Permanent+Marker&display=swap">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -122,37 +122,106 @@
   <!-- EDIT / DOWNLOAD -->
   <section id="edit" class="screen" hidden>
     <div class="edit-grid">
-      <div class="preview"><canvas id="outCanvas"></canvas></div>
-      <aside class="panel glass">
-        <div>
-          <h3>Layout</h3>
-          <div id="editLayouts" class="layouts"></div>
+      <div class="canvas-col">
+        <div class="preview">
+          <div class="canvas-wrap">
+            <canvas id="outCanvas"></canvas>
+            <canvas id="overlay"></canvas>
+          </div>
         </div>
-        <div>
-          <h3>Background</h3>
-          <div class="swatches" id="swatches"></div>
-        </div>
-        <div id="builtinControls" class="stack">
-          <label>Photo spacing
-            <input type="range" id="gapRange" min="0" max="60" step="2">
-          </label>
-          <label class="check"><input type="checkbox" id="roundChk"> Rounded corners</label>
-          <label>Caption
-            <input type="text" id="captionInp" maxlength="40" placeholder="Add a caption">
-          </label>
-          <label class="check"><input type="checkbox" id="dateChk"> Add date</label>
-        </div>
-        <label>Download size
-          <select id="sizeSel">
-            <option value="1200">Standard (1200 px wide)</option>
-            <option value="1800">High (1800 px wide)</option>
+        <div class="toolbar glass">
+          <button id="undoBtn" class="btn ghost" title="Undo (Ctrl+Z)">Undo</button>
+          <button id="redoBtn" class="btn ghost" title="Redo (Ctrl+Y)">Redo</button>
+          <button id="compareBtn" class="btn ghost" title="Hold to see the original photos">Hold to compare</button>
+          <select id="sizeSel" aria-label="Download size">
+            <option value="1200">Standard (1200 px)</option>
+            <option value="1800">High (1800 px)</option>
           </select>
-        </label>
-        <button id="downloadBtn" class="btn primary big">Download PNG</button>
-        <p class="hint">On iPhone, the image opens in a new tab. Press and hold it to save.</p>
-        <div class="row">
-          <button id="backReview" class="btn ghost">Back to photos</button>
-          <button id="newSession" class="btn ghost">New photobooth</button>
+          <button id="downloadBtn" class="btn primary">Download PNG</button>
+        </div>
+        <p class="hint center-text">On iPhone, the image opens in a new tab. Press and hold it to save.</p>
+      </div>
+
+      <aside class="panel glass">
+        <div id="selBox" class="selbox" hidden>
+          <strong id="selTitle">Selected</strong>
+          <label id="selTextRow">Text <input type="text" id="selText" maxlength="60"></label>
+          <label id="selFontRow">Font <select id="selFont"></select></label>
+          <div id="selColorRow" class="row">
+            <input type="color" id="selColor" aria-label="Text color">
+            <label class="check"><input type="checkbox" id="selOutline"> Outline</label>
+            <label class="check"><input type="checkbox" id="selShadow"> Shadow</label>
+          </div>
+          <label>Size <input type="range" id="selSize"></label>
+          <label>Rotate <input type="range" id="selRot" min="-180" max="180"></label>
+          <label class="check"><input type="checkbox" id="selLock"> Lock in place</label>
+          <div class="row">
+            <button id="selDup" class="btn ghost small">Duplicate</button>
+            <button id="selFwd" class="btn ghost small">Bring forward</button>
+            <button id="selBack" class="btn ghost small">Send back</button>
+            <button id="selDel" class="btn ghost small">Delete</button>
+          </div>
+        </div>
+
+        <div class="tabs" role="tablist">
+          <button data-tab="design" class="on">Design</button>
+          <button data-tab="filters">Filters</button>
+          <button data-tab="stickers">Stickers</button>
+          <button data-tab="text">Text</button>
+        </div>
+
+        <div class="tabpane" id="tab-design">
+          <div>
+            <h3>Layout</h3>
+            <div id="editLayouts" class="layouts"></div>
+          </div>
+          <div>
+            <h3>Background</h3>
+            <div class="swatches" id="swatches"></div>
+          </div>
+          <div id="builtinControls" class="stack">
+            <label>Photo spacing
+              <input type="range" id="gapRange" min="0" max="60" step="2">
+            </label>
+            <label class="check"><input type="checkbox" id="roundChk"> Rounded corners</label>
+            <label>Caption
+              <input type="text" id="captionInp" maxlength="40" placeholder="Add a caption">
+            </label>
+            <label class="check"><input type="checkbox" id="dateChk"> Add date</label>
+          </div>
+          <div class="row">
+            <button id="backReview" class="btn ghost">Back to photos</button>
+            <button id="newSession" class="btn ghost">New photobooth</button>
+          </div>
+        </div>
+
+        <div class="tabpane" id="tab-filters" hidden>
+          <div class="seg">
+            <button data-fx="color" class="on">Color</button>
+            <button data-fx="warp">Warp</button>
+          </div>
+          <div id="fxGrid" class="fx-grid"></div>
+          <label>Filter strength <input type="range" id="fxStrength" min="0" max="100"></label>
+          <label id="warpStrRow" hidden>Warp strength <input type="range" id="warpStrength" min="0" max="100"></label>
+          <details>
+            <summary>Adjustments</summary>
+            <div id="adjList" class="stack"></div>
+          </details>
+          <button id="fxReset" class="btn ghost">Reset filters</button>
+        </div>
+
+        <div class="tabpane" id="tab-stickers" hidden>
+          <div id="stickerCats" class="seg wrap"></div>
+          <div id="stickerGrid" class="sticker-grid"></div>
+          <p class="hint">Tap a sticker to add it, then drag it on the picture. Drag the round handle to resize and rotate.</p>
+        </div>
+
+        <div class="tabpane" id="tab-text" hidden>
+          <div class="row">
+            <button id="addText" class="btn primary">Add text</button>
+            <button id="addStamp" class="btn ghost">Add date stamp</button>
+          </div>
+          <p class="hint">Tap the text on the picture to change its words, font, color and size.</p>
         </div>
       </aside>
     </div>
@@ -163,6 +232,7 @@
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 <div id="toast" class="toast" role="status"></div>
 
+<script src="fx.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

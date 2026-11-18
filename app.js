@@ -23,8 +23,12 @@
     mirror: true, facing: 'user', deviceId: null,
     stream: null, camToken: 0,
     busy: false, cancel: false,
-    screen: 'home', mode: 'new', retakeIdx: null, uploadIdx: null
+    screen: 'home', mode: 'new', retakeIdx: null, uploadIdx: null,
+    fx: IrieFX.defaultFx(), items: [], sel: null, compare: false,
+    tab: 'design', fxTab: 'color', stickerCat: 'Hearts', hist: [], histIdx: -1
   };
+  let uid = 0;
+  const tag = c => { c._id = ++uid; return c; };
 
   /* ---------- layouts ---------- */
   function strip(n, name) {
@@ -150,7 +154,54 @@
     }
   }
 
-  function render(canvas, L, photos, o, outW) {
+  /* ----- stickers & text drawing ----- */
+  const FONTS = [
+    { k: 'caveat', n: 'Handwritten', css: 'Caveat, cursive', w: 600 },
+    { k: 'pacifico', n: 'Script', css: 'Pacifico, cursive', w: 400 },
+    { k: 'marker', n: 'Marker', css: '"Permanent Marker", cursive', w: 400 },
+    { k: 'bricolage', n: 'Bold', css: '"Bricolage Grotesque", sans-serif', w: 800 },
+    { k: 'dm', n: 'Clean', css: '"DM Sans", sans-serif', w: 700 },
+    { k: 'mono', n: 'Date stamp', css: '"Courier New", monospace', w: 700 }
+  ];
+  const fontOf = k => FONTS.find(f => f.k === k) || FONTS[0];
+  const fontStr = (it, px) => { const f = fontOf(it.font); return `${f.w} ${px}px ${f.css}`; };
+  const EMOJI_FONT = '"Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif';
+  const mctx = document.createElement('canvas').getContext('2d');
+  const imgCache = new Map();
+  function getImg(src) {
+    let im = imgCache.get(src);
+    if (!im) { im = new Image(); im.onload = () => { if (state.screen === 'edit') renderEdit(); }; im.src = src; imgCache.set(src, im); }
+    return im;
+  }
+  const imgReady = src => new Promise(res => { const im = getImg(src); if (im.complete) res(); else { im.addEventListener('load', res); im.addEventListener('error', res); } });
+
+  function itemBox(it, g) {
+    const px = it.size * g.w;
+    if (it.type === 'emoji') return { w: px * 1.2, h: px * 1.2 };
+    if (it.type === 'img') { const im = getImg(it.value); const r = im.naturalWidth ? im.naturalHeight / im.naturalWidth : 1; return { w: px, h: px * r }; }
+    mctx.font = fontStr(it, px);
+    return { w: Math.max(mctx.measureText(it.text || ' ').width, px * .5) + px * .3, h: px * 1.35 };
+  }
+  function drawItem(ctx, it, g, s) {
+    const px = it.size * g.w;
+    ctx.save(); ctx.translate(it.nx * g.w, it.ny * g.h); ctx.rotate(it.rot * Math.PI / 180);
+    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+    if (it.type === 'emoji') { ctx.font = `${px}px ${EMOJI_FONT}`; ctx.fillText(it.value, 0, 0); }
+    else if (it.type === 'img') {
+      const im = getImg(it.value);
+      if (im.complete && im.naturalWidth) { const w = px, h = px * im.naturalHeight / im.naturalWidth; ctx.drawImage(im, -w / 2, -h / 2, w, h); }
+    } else {
+      ctx.font = fontStr(it, px);
+      if (it.shadow) { ctx.shadowColor = 'rgba(0,0,0,.55)'; ctx.shadowBlur = px * .1 * s; ctx.shadowOffsetX = px * .04 * s; ctx.shadowOffsetY = px * .05 * s; }
+      if (it.outline) { ctx.lineJoin = 'round'; ctx.lineWidth = px * .16; ctx.strokeStyle = lum(it.color) > .55 ? '#2a1740' : '#ffffff'; ctx.strokeText(it.text, 0, 0); }
+      ctx.fillStyle = it.color; ctx.fillText(it.text, 0, 0);
+    }
+    ctx.restore();
+  }
+
+  /* ----- main render ----- */
+  const fxCache = new Map();
+  function render(canvas, L, photos, o, outW, ex = {}) {
     const g = L.geom(o), s = outW / g.w;
     canvas.width = Math.round(g.w * s); canvas.height = Math.round(g.h * s);
     const ctx = canvas.getContext('2d');
@@ -159,14 +210,23 @@
     if (bg.b) { const gr = ctx.createLinearGradient(0, 0, g.w * 0.4, g.h); gr.addColorStop(0, bg.a); gr.addColorStop(1, bg.b); ctx.fillStyle = gr; }
     else ctx.fillStyle = bg.a;
     ctx.fillRect(0, 0, g.w, g.h);
+    const fx = ex.fx && !IrieFX.isNeutral(ex.fx) ? ex.fx : null, fxKey = fx ? JSON.stringify(fx) : '';
     g.slots.forEach((sl, i) => {
       const p = photos ? photos[i] : null;
       ctx.save(); rr(ctx, sl.x, sl.y, sl.w, sl.h, g.r || 0); ctx.clip();
-      if (p) drawCover(ctx, p, sl); else drawPlaceholder(ctx, sl, i);
+      if (p && fx) {
+        const sw = Math.max(1, Math.round(sl.w * s)), sh = Math.max(1, Math.round(sl.h * s)), key = `${p._id}|${sw}x${sh}|${fxKey}`;
+        let t = ex.nocache ? null : fxCache.get(key);
+        if (!t) { t = IrieFX.process(p, sw, sh, fx); if (!ex.nocache) { if (fxCache.size > 24) fxCache.delete(fxCache.keys().next().value); fxCache.set(key, t); } }
+        ctx.drawImage(t, sl.x, sl.y, sl.w, sl.h);
+      } else if (p) drawCover(ctx, p, sl);
+      else drawPlaceholder(ctx, sl, i);
       ctx.restore();
     });
     if (g.overlay) ctx.drawImage(g.overlay, 0, 0, g.w, g.h);
-    else drawFooter(ctx, g, o, lum(bg.a) > 0.5 && !(bg.b) ? '#2a1740' : (bg.b ? '#2a1740' : '#ffffff'));
+    else drawFooter(ctx, g, o, bg.b || lum(bg.a) > 0.5 ? '#2a1740' : '#ffffff');
+    (ex.items || []).forEach(it => drawItem(ctx, it, g, s));
+    return g;
   }
 
   /* ---------- pickers ---------- */
@@ -189,7 +249,7 @@
     state.layoutId = L.id; store.set('layout', L.id);
     $('#stage').style.setProperty('--ar', L.aspect);
     refreshPickers();
-    if (state.screen === 'edit') renderEdit();
+    if (state.screen === 'edit') { commit(); renderEdit(); }
   }
   function refreshPickers() {
     buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); });
@@ -224,7 +284,7 @@
     if (name === 'home') { buildHero(); refreshPickers(); }
     window.scrollTo(0, 0);
   }
-  function startBooth() { state.mode = 'new'; state.retakeIdx = null; goTo('booth'); }
+  function startBooth() { state.mode = 'new'; state.retakeIdx = null; resetEdit(); goTo('booth'); }
 
   /* ---------- camera ---------- */
   const video = $('#video');
@@ -285,7 +345,7 @@
     const x = c.getContext('2d');
     if (state.mirror) { x.translate(vw, 0); x.scale(-1, 1); }
     x.drawImage(video, 0, 0, vw, vh);
-    return c;
+    return tag(c);
   }
 
   /* ---------- sound ---------- */
@@ -380,7 +440,7 @@
       const k = Math.min(1, 2000 / Math.max(img.naturalWidth, img.naturalHeight));
       const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
       c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      return c;
+      return tag(c);
     } finally { URL.revokeObjectURL(url); }
   }
   function pickFiles(idx) { state.uploadIdx = idx; $('#fileInput').click(); }
@@ -397,7 +457,7 @@
       state.layoutId = L.id; store.set('layout', L.id);
       state.photos = Array(L.count).fill(null);
       for (let i = 0; i < L.count && i < files.length; i++) state.photos[i] = await fileToCanvas(files[i]);
-      state.mode = 'new'; goTo('review');
+      state.mode = 'new'; resetEdit(); goTo('review');
     } catch { toast('Could not read that image.'); }
   });
 
@@ -422,39 +482,254 @@
     $('#reviewContinue').disabled = !state.photos.length || state.photos.some(p => !p);
   }
 
-  /* ---------- edit / export ---------- */
-  let raf;
+  /* ---------- edit: history ---------- */
+  const snap = () => JSON.stringify({ fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId });
+  function commit() {
+    const j = snap();
+    if (state.hist[state.histIdx] === j) return;
+    state.hist = state.hist.slice(0, state.histIdx + 1); state.hist.push(j);
+    if (state.hist.length > 60) state.hist.shift();
+    state.histIdx = state.hist.length - 1; updateUndoUI();
+  }
+  function restore(i) {
+    state.histIdx = i;
+    const d = JSON.parse(state.hist[i]);
+    state.fx = d.fx; state.items = d.items; state.opts = d.opts; state.layoutId = d.layoutId;
+    if (!state.items.find(it => it.id === state.sel)) state.sel = null;
+    syncAll(); renderEdit(); updateUndoUI();
+  }
+  function undo() { if (state.histIdx > 0) restore(state.histIdx - 1); }
+  function redo() { if (state.histIdx < state.hist.length - 1) restore(state.histIdx + 1); }
+  function updateUndoUI() { $('#undoBtn').disabled = state.histIdx <= 0; $('#redoBtn').disabled = state.histIdx >= state.hist.length - 1; }
+  function resetEdit() { state.items = []; state.sel = null; state.hist = []; state.histIdx = -1; }
+
+  /* ---------- edit: render ---------- */
+  let raf, lastG = null, lastS = 1;
+  const photosNow = () => state.photos.slice(0, cur().count);
   function renderEdit() {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
-      const L = cur(); render($('#outCanvas'), L, state.photos.slice(0, L.count), state.opts, 900);
+      const out = $('#outCanvas'), L = cur();
+      lastG = render(out, L, photosNow(), state.opts, 900, { fx: state.compare ? null : state.fx, items: state.items });
+      lastS = out.width / lastG.w;
+      const ov = $('#overlay'); ov.width = out.width; ov.height = out.height;
+      drawOverlay();
     });
   }
-  function enterEdit() {
-    const have = state.photos.filter(Boolean).length;
-    if (cur().count > have) { const ok = layouts.find(l => l.count <= have); if (ok) { state.layoutId = ok.id; } }
+  function selected() { return state.items.find(it => it.id === state.sel) || null; }
+  function cssK() { const ov = $('#overlay'), r = ov.getBoundingClientRect(); return r.width ? (ov.width / r.width) / lastS : 1; }
+  function handlePos(it) {
+    const bx = itemBox(it, lastG), a = it.rot * Math.PI / 180, hx = bx.w / 2, hy = bx.h / 2;
+    return { x: it.nx * lastG.w + hx * Math.cos(a) - hy * Math.sin(a), y: it.ny * lastG.h + hx * Math.sin(a) + hy * Math.cos(a) };
+  }
+  function drawOverlay() {
+    const ov = $('#overlay'), ctx = ov.getContext('2d'); ctx.clearRect(0, 0, ov.width, ov.height);
+    const it = selected(); if (!it || !lastG || state.compare) return;
+    const k = cssK(), bx = itemBox(it, lastG);
+    ctx.setTransform(lastS, 0, 0, lastS, 0, 0);
+    ctx.save(); ctx.translate(it.nx * lastG.w, it.ny * lastG.h); ctx.rotate(it.rot * Math.PI / 180);
+    ctx.lineWidth = 2 * k; ctx.setLineDash([6 * k, 4 * k]); ctx.strokeStyle = it.locked ? '#888' : '#e63e92';
+    ctx.strokeRect(-bx.w / 2, -bx.h / 2, bx.w, bx.h); ctx.restore();
+    if (!it.locked) {
+      const h = handlePos(it);
+      ctx.setLineDash([]); ctx.beginPath(); ctx.arc(h.x, h.y, 9 * k, 0, Math.PI * 2);
+      ctx.fillStyle = '#7c4dff'; ctx.fill(); ctx.lineWidth = 2.5 * k; ctx.strokeStyle = '#fff'; ctx.stroke();
+    }
+  }
+
+  /* ---------- edit: items ---------- */
+  function addItem(it) {
+    const j = () => (Math.random() - .5) * .16;
+    const item = { id: 'i' + (++uid), nx: .5 + j(), ny: .5 + j(), rot: 0, locked: false, ...it };
+    state.items.push(item); state.sel = item.id; commit(); syncSel(); renderEdit();
+    return item;
+  }
+  function addText(opts) { return addItem({ type: 'text', text: 'your text', font: 'caveat', color: '#ffffff', size: .1, outline: true, shadow: false, ...opts }); }
+  function stamp() {
+    const d = new Date(), p = n => String(n).padStart(2, '0');
+    addText({ text: `${d.getFullYear()}.${p(d.getMonth() + 1)}.${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`, font: 'mono', color: '#ff9a3c', size: .055, outline: false, shadow: true, nx: .5, ny: .93 });
+  }
+  function hit(it, p) {
+    const bx = itemBox(it, lastG), a = -it.rot * Math.PI / 180, dx = p.x - it.nx * lastG.w, dy = p.y - it.ny * lastG.h;
+    const lx = dx * Math.cos(a) - dy * Math.sin(a), ly = dx * Math.sin(a) + dy * Math.cos(a);
+    return Math.abs(lx) <= bx.w / 2 && Math.abs(ly) <= bx.h / 2;
+  }
+  function selectItem(id) { state.sel = id; syncSel(); drawOverlay(); }
+
+  let drag = null;
+  function toDesign(e) { const r = $('#overlay').getBoundingClientRect(); return { x: (e.clientX - r.left) / r.width * lastG.w, y: (e.clientY - r.top) / r.height * lastG.h }; }
+  const overlay = $('#overlay');
+  overlay.addEventListener('pointerdown', e => {
+    if (!lastG) return;
+    const p = toDesign(e), sel = selected(), k = cssK();
+    if (sel && !sel.locked) {
+      const h = handlePos(sel);
+      if (Math.hypot(p.x - h.x, p.y - h.y) <= 16 * k) {
+        const cx = sel.nx * lastG.w, cy = sel.ny * lastG.h;
+        drag = { mode: 'scale', id: sel.id, cx, cy, d0: Math.hypot(p.x - cx, p.y - cy) || 1, a0: Math.atan2(p.y - cy, p.x - cx), size0: sel.size, rot0: sel.rot, moved: false };
+        overlay.setPointerCapture(e.pointerId); return;
+      }
+    }
+    for (let i = state.items.length - 1; i >= 0; i--) {
+      const it = state.items[i];
+      if (hit(it, p)) {
+        selectItem(it.id);
+        if (!it.locked) { drag = { mode: 'move', id: it.id, ox: p.x - it.nx * lastG.w, oy: p.y - it.ny * lastG.h, moved: false }; overlay.setPointerCapture(e.pointerId); }
+        return;
+      }
+    }
+    selectItem(null);
+  });
+  overlay.addEventListener('pointermove', e => {
+    if (!drag) return;
+    const it = state.items.find(x => x.id === drag.id); if (!it) return;
+    const p = toDesign(e); drag.moved = true;
+    if (drag.mode === 'move') { it.nx = Math.min(1, Math.max(0, (p.x - drag.ox) / lastG.w)); it.ny = Math.min(1, Math.max(0, (p.y - drag.oy) / lastG.h)); }
+    else {
+      const d = Math.hypot(p.x - drag.cx, p.y - drag.cy), a = Math.atan2(p.y - drag.cy, p.x - drag.cx);
+      it.size = Math.min(.8, Math.max(.02, drag.size0 * d / drag.d0));
+      let r = drag.rot0 + (a - drag.a0) * 180 / Math.PI; r = ((r + 180) % 360 + 360) % 360 - 180; it.rot = Math.round(r);
+      syncSel();
+    }
+    renderEdit();
+  });
+  const endDrag = () => { if (drag && drag.moved) commit(); drag = null; };
+  overlay.addEventListener('pointerup', endDrag); overlay.addEventListener('pointercancel', endDrag);
+
+  /* ---------- edit: panel sync ---------- */
+  function syncSel() {
+    const it = selected(), box = $('#selBox'); box.hidden = !it; if (!it) return;
+    const isText = it.type === 'text';
+    $('#selTitle').textContent = isText ? 'Selected text' : 'Selected sticker';
+    $('#selTextRow').hidden = !isText; $('#selFontRow').hidden = !isText; $('#selColorRow').hidden = !isText;
+    if (isText) {
+      $('#selText').value = it.text; $('#selFont').value = it.font; $('#selColor').value = it.color;
+      $('#selOutline').checked = !!it.outline; $('#selShadow').checked = !!it.shadow;
+    }
+    const sz = $('#selSize'); sz.min = isText ? 3 : 4; sz.max = isText ? 40 : 70; sz.value = Math.round(it.size * 100);
+    $('#selRot').value = it.rot; $('#selLock').checked = !!it.locked;
+  }
+  function syncFx() {
+    $('#fxStrength').value = state.fx.strength; $('#warpStrength').value = state.fx.warpStrength;
+    $('#warpStrRow').hidden = state.fx.warp === 'none';
+    $$('#adjList .adj').forEach(row => { const k = row.dataset.k, v = state.fx.adj[k]; $('input', row).value = v; $('.v', row).textContent = v; });
+    renderFxGrid();
+  }
+  function syncDesign() {
     $('#gapRange').value = state.opts.gap; $('#roundChk').checked = state.opts.round;
     $('#captionInp').value = state.opts.caption; $('#dateChk').checked = state.opts.date;
     buildSwatches(); refreshPickers();
-    (document.fonts ? document.fonts.load('600 40px Caveat').catch(() => {}) : Promise.resolve()).then(renderEdit);
-    renderEdit();
   }
+  function syncAll() { syncDesign(); syncFx(); syncSel(); updateUndoUI(); }
+
   function buildSwatches() {
     const box = $('#swatches'); box.innerHTML = '';
     const same = b => b.a === state.opts.bg.a && b.b === state.opts.bg.b;
     BGS.forEach(b => {
-      const s = document.createElement('button'); s.className = 'sw' + (same(b) ? ' on' : '');
-      s.style.background = b.b ? `linear-gradient(135deg,${b.a},${b.b})` : b.a; s.setAttribute('aria-label', 'Background ' + b.a);
-      s.onclick = () => { state.opts.bg = b; store.set('bg', b); buildSwatches(); refreshPickers(); renderEdit(); };
-      box.append(s);
+      const sw = document.createElement('button'); sw.className = 'sw' + (same(b) ? ' on' : '');
+      sw.style.background = b.b ? `linear-gradient(135deg,${b.a},${b.b})` : b.a; sw.setAttribute('aria-label', 'Background ' + b.a);
+      sw.onclick = () => { state.opts.bg = b; store.set('bg', b); buildSwatches(); refreshPickers(); commit(); renderEdit(); };
+      box.append(sw);
     });
     const c = document.createElement('input'); c.type = 'color'; c.value = state.opts.bg.a; c.setAttribute('aria-label', 'Custom background color');
     c.oninput = () => { state.opts.bg = { a: c.value }; store.set('bg', state.opts.bg); renderEdit(); };
+    c.onchange = () => { commit(); buildSwatches(); };
     box.append(c);
   }
-  function download() {
+
+  /* ---------- edit: filters ---------- */
+  let thumbs = { color: {}, warp: {} };
+  function buildThumbs() {
+    thumbs = { color: {}, warp: {} };
+    const src = state.photos.find(Boolean); if (!src) return;
+    const mk = fx => IrieFX.process(src, 96, 72, fx);
+    IrieFX.PRESETS.forEach(p => { const f = IrieFX.defaultFx(); f.color = p.id; thumbs.color[p.id] = mk(f); });
+    IrieFX.WARPS.forEach(w => { const f = IrieFX.defaultFx(); f.warp = w.id; f.warpStrength = 70; thumbs.warp[w.id] = mk(f); });
+  }
+  function renderFxGrid() {
+    const grid = $('#fxGrid'); grid.innerHTML = '';
+    const list = state.fxTab === 'color' ? IrieFX.PRESETS : IrieFX.WARPS, now = state.fx[state.fxTab];
+    list.forEach(f => {
+      const b = document.createElement('button'); b.className = f.id === now ? 'on' : '';
+      const t = thumbs[state.fxTab][f.id]; if (t) { const c = document.createElement('canvas'); c.width = t.width; c.height = t.height; c.getContext('2d').drawImage(t, 0, 0); b.append(c); }
+      const l = document.createElement('span'); l.textContent = f.name; b.append(l);
+      b.onclick = () => { state.fx[state.fxTab] = f.id; syncFx(); commit(); renderEdit(); };
+      grid.append(b);
+    });
+    $$('.seg [data-fx]').forEach(b => b.classList.toggle('on', b.dataset.fx === state.fxTab));
+  }
+  function buildAdjust() {
+    const box = $('#adjList'); box.innerHTML = '';
+    IrieFX.ADJ.forEach(([k, name, min, max]) => {
+      const row = document.createElement('label'); row.className = 'adj'; row.dataset.k = k;
+      row.innerHTML = `<div class="top">${name}<span class="v">0</span></div><input type="range" min="${min}" max="${max}" value="0">`;
+      const inp = $('input', row);
+      inp.oninput = () => { state.fx.adj[k] = +inp.value; $('.v', row).textContent = inp.value; renderEdit(); };
+      inp.onchange = commit;
+      inp.ondblclick = () => { inp.value = 0; inp.oninput(); commit(); };
+      box.append(row);
+    });
+  }
+
+  /* ---------- edit: stickers ---------- */
+  const STICKERS = {
+    Hearts: ['💖', '💗', '💕', '💘', '💝', '🩷', '💜', '🤍', '❤️', '💞', '💓', '🫶'],
+    Stars: ['⭐', '🌟', '💫', '🌠', '✴️', '🪐', '🌙', '☄️'],
+    Flowers: ['🌸', '🌷', '🌹', '🌺', '🌼', '🌻', '🪷', '💐', '🪻', '🌿'],
+    Bows: ['🎀', '🎗️', '🩰', '🎁', '🧵', '🪢'],
+    Sparkles: ['✨', '💎', '🔮', '🪩', '🫧', '🎇', '🎆', '⚡'],
+    Butterflies: ['🦋', '🐝', '🐞', '🍃', '🪽', '🌱'],
+    Cute: ['🧸', '🐰', '🐻', '🐱', '🐶', '🐥', '🍓', '🍒', '🍑', '🍰', '🧁', '🍡', '🍭', '☁️', '🌈'],
+    Retro: ['📼', '📷', '📻', '🕹️', '💾', '☎️', '🎞️', '💿', '📺', '🎧'],
+    Y2K: ['💿', '📟', '✌️', '💅', '👛', '🦄', '🌈', '👾', '💋', '🕶️', '📱', '🪩'],
+    Seasonal: ['🎄', '🎅', '❄️', '⛄', '🎃', '👻', '🦃', '🍂', '💘', '🐣', '☀️', '🏖️', '🎂', '🎉', '🎈']
+  };
+  let custom = {};
+  async function loadStickers() {
+    try {
+      const res = await fetch('stickers/stickers.json', { cache: 'no-cache' }); if (!res.ok) return;
+      const data = await res.json();
+      (data.stickers || []).forEach(s => { const c = s.category || 'Mine'; (custom[c] = custom[c] || []).push({ type: 'img', value: 'stickers/' + s.file, name: s.name || s.file }); });
+      renderStickers();
+    } catch { /* optional */ }
+  }
+  function stickerCats() {
+    const names = Object.keys(STICKERS); Object.keys(custom).forEach(c => { if (!names.includes(c)) names.push(c); });
+    return names;
+  }
+  function renderStickers() {
+    const cats = stickerCats(); if (!cats.includes(state.stickerCat)) state.stickerCat = cats[0];
+    const bar = $('#stickerCats'); bar.innerHTML = '';
+    cats.forEach(c => { const b = document.createElement('button'); b.textContent = c; b.className = c === state.stickerCat ? 'on' : ''; b.onclick = () => { state.stickerCat = c; renderStickers(); }; bar.append(b); });
+    const grid = $('#stickerGrid'); grid.innerHTML = '';
+    const list = (STICKERS[state.stickerCat] || []).map(v => ({ type: 'emoji', value: v })).concat(custom[state.stickerCat] || []);
+    list.forEach(st => {
+      const b = document.createElement('button'); b.title = st.name || '';
+      if (st.type === 'img') { const im = document.createElement('img'); im.src = st.value; im.alt = st.name || ''; b.append(im); } else b.textContent = st.value;
+      b.onclick = () => addItem({ type: st.type, value: st.value, size: st.type === 'img' ? .22 : .16 });
+      grid.append(b);
+    });
+  }
+
+  /* ---------- edit: enter / export ---------- */
+  function enterEdit() {
+    const have = state.photos.filter(Boolean).length;
+    if (cur().count > have) { const ok = layouts.find(l => l.count <= have); if (ok) state.layoutId = ok.id; }
+    state.compare = false; buildThumbs();
+    if (state.histIdx < 0) commit();
+    syncAll(); renderEdit();
+    const loads = FONTS.map(f => (document.fonts ? document.fonts.load(`${f.w} 40px ${f.css}`).catch(() => {}) : Promise.resolve()));
+    Promise.all(loads).then(renderEdit);
+  }
+  function setTab(name) {
+    state.tab = name;
+    $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
+    $$('.tabpane').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
+  }
+  async function download() {
     const L = cur(), c = document.createElement('canvas');
-    render(c, L, state.photos.slice(0, L.count), state.opts, +$('#sizeSel').value);
+    await Promise.all(state.items.filter(it => it.type === 'img').map(it => imgReady(it.value)));
+    render(c, L, photosNow(), state.opts, +$('#sizeSel').value, { fx: state.fx, items: state.items, nocache: true });
     c.toBlob(blob => {
       if (!blob) { toast('Export failed. Try the Standard size.'); return; }
       const a = document.createElement('a'), d = new Date(), p = n => String(n).padStart(2, '0');
@@ -492,10 +767,56 @@
   $('#backReview').onclick = () => goTo('review');
   $('#newSession').onclick = startBooth;
   $('#gapRange').oninput = e => { state.opts.gap = +e.target.value; store.set('gap', state.opts.gap); renderEdit(); };
-  $('#roundChk').onchange = e => { state.opts.round = e.target.checked; store.set('round', state.opts.round); renderEdit(); };
+  $('#gapRange').onchange = commit;
+  $('#roundChk').onchange = e => { state.opts.round = e.target.checked; store.set('round', state.opts.round); commit(); renderEdit(); };
   $('#captionInp').oninput = e => { state.opts.caption = e.target.value; renderEdit(); };
-  $('#dateChk').onchange = e => { state.opts.date = e.target.checked; renderEdit(); };
+  $('#captionInp').onchange = commit;
+  $('#dateChk').onchange = e => { state.opts.date = e.target.checked; commit(); renderEdit(); };
   $('#downloadBtn').onclick = download;
+
+  // toolbar
+  $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
+  const cmp = $('#compareBtn');
+  const setCompare = v => { if (state.compare !== v) { state.compare = v; renderEdit(); } };
+  cmp.addEventListener('pointerdown', e => { e.preventDefault(); setCompare(true); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => cmp.addEventListener(ev, () => setCompare(false)));
+  cmp.addEventListener('keydown', e => { if (e.key === ' ' || e.key === 'Enter') { e.preventDefault(); setCompare(true); } });
+  cmp.addEventListener('keyup', () => setCompare(false));
+  document.addEventListener('keydown', e => {
+    if (state.screen !== 'edit') return;
+    const typing = /INPUT|SELECT|TEXTAREA/.test(document.activeElement.tagName) && document.activeElement.type !== 'range' && document.activeElement.type !== 'checkbox';
+    const mod = e.ctrlKey || e.metaKey;
+    if (mod && e.key.toLowerCase() === 'z') { e.preventDefault(); e.shiftKey ? redo() : undo(); }
+    else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
+    else if (!typing && (e.key === 'Delete' || e.key === 'Backspace') && selected()) { e.preventDefault(); $('#selDel').click(); }
+  });
+
+  // tabs + filters
+  $$('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
+  $$('.seg [data-fx]').forEach(b => b.onclick = () => { state.fxTab = b.dataset.fx; renderFxGrid(); });
+  $('#fxStrength').oninput = e => { state.fx.strength = +e.target.value; renderEdit(); };
+  $('#warpStrength').oninput = e => { state.fx.warpStrength = +e.target.value; renderEdit(); };
+  $('#fxStrength').onchange = $('#warpStrength').onchange = commit;
+  $('#fxReset').onclick = () => { state.fx = IrieFX.defaultFx(); syncFx(); commit(); renderEdit(); };
+  $('#addText').onclick = () => { addText(); setTab('text'); };
+  $('#addStamp').onclick = stamp;
+
+  // selected item controls
+  const FONT_SEL = $('#selFont');
+  FONTS.forEach(f => { const o = document.createElement('option'); o.value = f.k; o.textContent = f.n; FONT_SEL.append(o); });
+  const live = (id, fn) => { $(id).addEventListener('input', e => { const it = selected(); if (it) { fn(it, e.target); renderEdit(); } }); $(id).addEventListener('change', commit); };
+  live('#selText', (it, t) => { it.text = t.value; });
+  live('#selFont', (it, t) => { it.font = t.value; });
+  live('#selColor', (it, t) => { it.color = t.value; });
+  live('#selOutline', (it, t) => { it.outline = t.checked; });
+  live('#selShadow', (it, t) => { it.shadow = t.checked; });
+  live('#selSize', (it, t) => { it.size = +t.value / 100; });
+  live('#selRot', (it, t) => { it.rot = +t.value; });
+  $('#selLock').addEventListener('change', e => { const it = selected(); if (it) { it.locked = e.target.checked; commit(); drawOverlay(); } });
+  $('#selDup').onclick = () => { const it = selected(); if (it) { const c = { ...JSON.parse(JSON.stringify(it)), id: 'i' + (++uid), nx: Math.min(1, it.nx + .04), ny: Math.min(1, it.ny + .04), locked: false }; state.items.push(c); state.sel = c.id; commit(); syncSel(); renderEdit(); } };
+  $('#selDel').onclick = () => { const it = selected(); if (it) { state.items = state.items.filter(x => x !== it); state.sel = null; commit(); syncSel(); renderEdit(); } };
+  const move = d => { const i = state.items.findIndex(x => x.id === state.sel), j = i + d; if (i < 0 || j < 0 || j >= state.items.length) return; [state.items[i], state.items[j]] = [state.items[j], state.items[i]]; commit(); renderEdit(); };
+  $('#selFwd').onclick = () => move(1); $('#selBack').onclick = () => move(-1);
 
   // pickers on booth screen change the start button label
   $('#boothLayouts').addEventListener('click', () => setTimeout(updateStartLabel));
@@ -513,6 +834,6 @@
   addEventListener('pagehide', stopCamera);
 
   /* ---------- start ---------- */
-  buildHero(); refreshPickers(); loadFrames();
+  buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers();
   if (!layouts.find(l => l.id === state.layoutId)) state.layoutId = 'strip4';
 })();
