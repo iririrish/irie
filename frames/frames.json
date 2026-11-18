@@ -1,3 +1,8 @@
 {
-  "frames": []
+  "frames": [
+    { "name": "1", "file": "1-frame.png" },
+    { "name": "2", "file": "2-frame.png" },
+    { "name": "3", "file": "3-frame.png" },
+    { "name": "4", "file": "4-frame.png" }
+  ]
 }
