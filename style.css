@@ -199,3 +199,31 @@ details summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 .sticker-grid img{max-width:100%;max-height:100%;object-fit:contain}
 .selbox{display:grid;gap:10px;padding:12px;border-radius:16px;background:rgba(124,77,255,.1);border:1px dashed var(--violet)}
 .selbox input[type=color]{width:38px;height:34px;padding:0;border:0;background:none}
+
+/* ---- Phase 3: live effects, gallery ---- */
+.booth-main{display:grid;gap:12px;min-width:0}
+.stage .live{position:absolute;inset:0;width:100%;height:100%;display:none}
+.stage.gl .live{display:block}
+.stage.gl video{visibility:hidden}
+.fx-label{position:absolute;top:12px;left:50%;transform:translateX(-50%);padding:5px 14px;border-radius:999px;background:rgba(20,10,36,.55);color:#fff;font-size:.85rem;font-weight:700;pointer-events:none}
+.fx-label:empty{display:none}
+.fx-arrow{position:absolute;top:50%;transform:translateY(-50%);width:40px;height:56px;border:0;border-radius:14px;background:rgba(20,10,36,.45);color:#fff;font-size:1.8rem;line-height:1}
+.fx-arrow.left{left:8px}.fx-arrow.right{right:8px}
+.fx-arrow:hover{background:rgba(20,10,36,.7)}
+.fxbar{display:grid;gap:8px;min-width:0}
+.fx-chips{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
+.chip{border:1px solid var(--glass-line);background:var(--field);border-radius:999px;padding:6px 16px;font-weight:700;font-size:.88rem}
+.chip.on{background:linear-gradient(90deg,var(--pink),var(--violet));border-color:transparent;color:#fff}
+.fx-strip{display:flex;gap:8px;overflow-x:auto;padding:4px 2px 8px;scroll-snap-type:x proximity}
+.fx-strip button{flex:0 0 86px;display:grid;gap:4px;justify-items:center;background:var(--field);border:2px solid transparent;border-radius:12px;padding:5px;font-size:.72rem;font-weight:500;scroll-snap-align:start}
+.fx-strip canvas{width:100%;height:auto;aspect-ratio:4/3;border-radius:7px;background:#222}
+.fx-strip button.on{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,77,255,.2)}
+.stage-wrap:fullscreen .fx-label{top:18px}
+.gallery-grid{display:flex;flex-wrap:wrap;gap:16px;justify-content:center;width:100%}
+.gcard{display:grid;gap:8px;justify-items:center;padding:12px;border-radius:16px;width:210px}
+.gcard img{max-width:100%;max-height:260px;border-radius:6px;box-shadow:var(--shadow);cursor:pointer}
+.gcard .meta{font-size:.82rem;color:var(--muted);text-align:center}
+.gcard .row{justify-content:center;gap:6px}
+.gcard .btn{padding:5px 11px;font-size:.8rem}
+.gallery-grid.small .gcard{width:150px;padding:8px}
+.gallery-grid.small .gcard img{max-height:170px}

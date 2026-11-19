@@ -27,6 +27,13 @@
     fx: IrieFX.defaultFx(), items: [], sel: null, compare: false,
     tab: 'design', fxTab: 'color', stickerCat: 'Hearts', hist: [], histIdx: -1
   };
+  {
+    const e = store.get('effect', 'none');
+    state.fx.effect = IrieFX.EFFECTS.some(x => x.id === e) ? e : 'none';
+    state.fx.strength = store.get('strength', 100);
+    const ef = IrieFX.EFFECTS.find(x => x.id === state.fx.effect);
+    if (ef && ef.cat !== 'none') state.fxTab = ef.cat;
+  }
   let uid = 0;
   const tag = c => { c._id = ++uid; return c; };
 
@@ -210,14 +217,14 @@
     if (bg.b) { const gr = ctx.createLinearGradient(0, 0, g.w * 0.4, g.h); gr.addColorStop(0, bg.a); gr.addColorStop(1, bg.b); ctx.fillStyle = gr; }
     else ctx.fillStyle = bg.a;
     ctx.fillRect(0, 0, g.w, g.h);
-    const fx = ex.fx && !IrieFX.isNeutral(ex.fx) ? ex.fx : null, fxKey = fx ? JSON.stringify(fx) : '';
+    const fx = glOK && ex.fx && !IrieFX.isNeutral(ex.fx) ? ex.fx : null, fxKey = fx ? JSON.stringify(fx) : '';
     g.slots.forEach((sl, i) => {
       const p = photos ? photos[i] : null;
       ctx.save(); rr(ctx, sl.x, sl.y, sl.w, sl.h, g.r || 0); ctx.clip();
       if (p && fx) {
         const sw = Math.max(1, Math.round(sl.w * s)), sh = Math.max(1, Math.round(sl.h * s)), key = `${p._id}|${sw}x${sh}|${fxKey}`;
         let t = ex.nocache ? null : fxCache.get(key);
-        if (!t) { t = IrieFX.process(p, sw, sh, fx); if (!ex.nocache) { if (fxCache.size > 24) fxCache.delete(fxCache.keys().next().value); fxCache.set(key, t); } }
+        if (!t) { t = fxPhoto(p, sw, sh, fx); if (!ex.nocache) { if (fxCache.size > 24) fxCache.delete(fxCache.keys().next().value); fxCache.set(key, t); } }
         ctx.drawImage(t, sl.x, sl.y, sl.w, sl.h);
       } else if (p) drawCover(ctx, p, sl);
       else drawPlaceholder(ctx, sl, i);
@@ -281,7 +288,8 @@
     if (name === 'booth') enterBooth(); else leaveBooth();
     if (name === 'review') renderReview();
     if (name === 'edit') enterEdit();
-    if (name === 'home') { buildHero(); refreshPickers(); }
+    if (name === 'home') { buildHero(); refreshPickers(); renderRecent(); }
+    if (name === 'gallery') renderGallery();
     window.scrollTo(0, 0);
   }
   function startBooth() { state.mode = 'new'; state.retakeIdx = null; resetEdit(); goTo('booth'); }
@@ -290,6 +298,7 @@
   const video = $('#video');
   function showMsg(text) { $('#camMsgText').textContent = text; $('#camMsg').hidden = false; }
   function stopCamera() {
+    stopLive();
     state.camToken++;
     if (state.stream) { state.stream.getTracks().forEach(t => t.stop()); state.stream = null; }
     video.srcObject = null;
@@ -326,6 +335,7 @@
       const st = stream.getVideoTracks()[0].getSettings();
       state.mirror = st.facingMode ? st.facingMode === 'user' : state.facing === 'user';
       $('#mirrorChk').checked = state.mirror; applyMirror();
+      startLive();
       await listCameras(st.deviceId);
     } catch (e) {
       if (tok !== state.camToken) return;
@@ -345,7 +355,81 @@
     const x = c.getContext('2d');
     if (state.mirror) { x.translate(vw, 0); x.scale(-1, 1); }
     x.drawImage(video, 0, 0, vw, vh);
+    c._seed = performance.now() / 1000;
     return tag(c);
+  }
+
+  /* ---------- live effects ---------- */
+  let liveR = null, workR = null, glOK = false, liveRaf = 0, boothThumbs = [], thumbIdx = 0;
+  const glParams = (fx, time, mirror) => ({ effect: fx.effect, k: fx.strength / 100, adj: fx.adj, time, mirror });
+  function fxPhoto(p, sw, sh, fx) {
+    workR.draw(p, p.width, p.height, glParams(fx, p._seed || 0, false), sw, sh);
+    const c = document.createElement('canvas'); c.width = sw; c.height = sh; c.getContext('2d').drawImage(workR.canvas, 0, 0);
+    return c;
+  }
+  function fillThumb(c, src, id, k) {
+    workR.draw(src, src.width, src.height, { effect: id, k, adj: {}, time: 0, mirror: false }, 96, 72);
+    c.getContext('2d').drawImage(workR.canvas, 0, 0);
+  }
+  const effectList = cat => IrieFX.EFFECTS.filter(e => e.cat === cat && (!glOK || liveR.usable(e.id)));
+  const allEffects = () => IrieFX.EFFECTS.filter(e => e.id === 'none' || !glOK || liveR.usable(e.id));
+  const effectOrder = () => { const o = allEffects(); return [o[0], ...IrieFX.CATS.flatMap(c => o.filter(e => e.cat === c.id))]; };
+
+  function initGL() {
+    try { liveR = IrieFX.create($('#liveCanvas')); workR = IrieFX.create(document.createElement('canvas')); } catch { liveR = workR = null; }
+    glOK = !!(liveR && workR);
+    $('#glMsg').hidden = glOK;
+    if (glOK) liveR.compileAll(() => { if (!liveR.usable(state.fx.effect)) state.fx.effect = 'none'; if (state.screen === 'booth') renderBoothFx(); });
+  }
+  function startLive() {
+    stopLive(); if (!glOK) return;
+    $('#stage').classList.add('gl');
+    const loop = t => {
+      liveRaf = requestAnimationFrame(loop);
+      if (!state.stream || video.readyState < 2 || !video.videoWidth) return;
+      const r = $('#stage').getBoundingClientRect(); if (r.width < 2) return;
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5), k = Math.min(1, 1280 / Math.max(r.width * dpr, r.height * dpr));
+      liveR.draw(video, video.videoWidth, video.videoHeight, glParams(state.fx, t / 1000, state.mirror), r.width * dpr * k, r.height * dpr * k);
+      if (boothThumbs.length) {
+        thumbIdx = (thumbIdx + 1) % boothThumbs.length;
+        const th = boothThumbs[thumbIdx];
+        workR.draw(video, video.videoWidth, video.videoHeight, { effect: th.id, k: state.fx.strength / 100, adj: {}, time: t / 1000, mirror: state.mirror }, 96, 72);
+        th.c.getContext('2d').drawImage(workR.canvas, 0, 0);
+      }
+    };
+    liveRaf = requestAnimationFrame(loop);
+  }
+  function stopLive() { cancelAnimationFrame(liveRaf); liveRaf = 0; const s = $('#stage'); if (s) s.classList.remove('gl'); }
+
+  function renderBoothFx(scrollTo) {
+    const strip = $('#fxStrip'); strip.innerHTML = ''; boothThumbs = [];
+    $$('.fx-chips [data-cat]').forEach(b => b.classList.toggle('on', b.dataset.cat === state.fxTab));
+    $('#fxNone').classList.toggle('on', state.fx.effect === 'none');
+    const cur = IrieFX.EFFECTS.find(e => e.id === state.fx.effect);
+    $('#fxLabel').textContent = glOK && cur && cur.id !== 'none' ? cur.name : '';
+    $$('#fxPrev, #fxNext, #fxNone, #fxRandom, .fx-chips [data-cat], #boothStrength').forEach(b => { b.disabled = !glOK; });
+    if (!glOK) return;
+    effectList(state.fxTab).forEach(e => {
+      const b = document.createElement('button'); b.className = e.id === state.fx.effect ? 'on' : '';
+      const c = document.createElement('canvas'); c.width = 96; c.height = 72;
+      const l = document.createElement('span'); l.textContent = e.name; b.append(c, l);
+      b.onclick = () => setEffect(e.id); strip.append(b); boothThumbs.push({ id: e.id, c });
+      if (scrollTo && e.id === state.fx.effect) setTimeout(() => b.scrollIntoView({ inline: 'center', block: 'nearest', behavior: 'smooth' }), 0);
+    });
+  }
+  function setEffect(id, scroll) {
+    if (!glOK) return;
+    state.fx.effect = id; store.set('effect', id);
+    const e = IrieFX.EFFECTS.find(x => x.id === id); if (e && e.cat !== 'none') state.fxTab = e.cat;
+    renderBoothFx(scroll);
+  }
+  function stepEffect(d) {
+    const o = effectOrder(), i = Math.max(0, o.findIndex(e => e.id === state.fx.effect));
+    setEffect(o[(i + d + o.length) % o.length].id, true);
+  }
+  function randomEffect() {
+    const o = allEffects().filter(e => e.id !== 'none' && e.id !== state.fx.effect);
+    if (o.length) setEffect(o[Math.floor(Math.random() * o.length)].id, true);
   }
 
   /* ---------- sound ---------- */
@@ -379,6 +463,7 @@
   function setBusy(b) {
     state.busy = b;
     $('#startBtn').hidden = b; $('#cancelBtn').hidden = !b;
+    $$('.fxbar button, .fx-arrow').forEach(e => { e.disabled = b || !glOK; });
     $$('#boothPanel select, #boothPanel input, #boothPanel button').forEach(e => { e.disabled = b; });
   }
   async function runCountdown(sec) {
@@ -422,6 +507,7 @@
     $('#countdownSel').value = state.countdown; $('#delaySel').value = state.delay; $('#muteChk').checked = state.mute;
     $('#fsBtn').hidden = !(document.fullscreenEnabled || document.webkitFullscreenEnabled);
     refreshPickers(); setProgress(null);
+    $('#boothStrength').value = state.fx.strength; renderBoothFx();
     startCamera();
   }
   function leaveBooth() {
@@ -470,7 +556,9 @@
       fig.style.setProperty('--ar', L.aspect);
       if (p) {
         const t = document.createElement('canvas'); t.width = 400; t.height = Math.round(400 / L.aspect);
-        drawCover(t.getContext('2d'), p, { x: 0, y: 0, w: t.width, h: t.height }); fig.append(t);
+        if (glOK && !IrieFX.isNeutral(state.fx)) t.getContext('2d').drawImage(fxPhoto(p, t.width, t.height, state.fx), 0, 0);
+        else drawCover(t.getContext('2d'), p, { x: 0, y: 0, w: t.width, h: t.height });
+        fig.append(t);
       } else { const e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Empty'; fig.append(e); }
       const row = document.createElement('div'); row.className = 'row';
       const a = document.createElement('button'); a.className = 'btn ghost'; a.textContent = p ? 'Retake' : 'Take photo';
@@ -610,8 +698,7 @@
     $('#selRot').value = it.rot; $('#selLock').checked = !!it.locked;
   }
   function syncFx() {
-    $('#fxStrength').value = state.fx.strength; $('#warpStrength').value = state.fx.warpStrength;
-    $('#warpStrRow').hidden = state.fx.warp === 'none';
+    $('#fxStrength').value = state.fx.strength;
     $$('#adjList .adj').forEach(row => { const k = row.dataset.k, v = state.fx.adj[k]; $('input', row).value = v; $('.v', row).textContent = v; });
     renderFxGrid();
   }
@@ -638,25 +725,25 @@
   }
 
   /* ---------- edit: filters ---------- */
-  let thumbs = { color: {}, warp: {} };
-  function buildThumbs() {
-    thumbs = { color: {}, warp: {} };
-    const src = state.photos.find(Boolean); if (!src) return;
-    const mk = fx => IrieFX.process(src, 96, 72, fx);
-    IrieFX.PRESETS.forEach(p => { const f = IrieFX.defaultFx(); f.color = p.id; thumbs.color[p.id] = mk(f); });
-    IrieFX.WARPS.forEach(w => { const f = IrieFX.defaultFx(); f.warp = w.id; f.warpStrength = 70; thumbs.warp[w.id] = mk(f); });
+  function pickEdit(id) {
+    state.fx.effect = id; store.set('effect', id);
+    const e = IrieFX.EFFECTS.find(x => x.id === id); if (e && e.cat !== 'none') state.fxTab = e.cat;
+    syncFx(); commit(); renderEdit();
   }
   function renderFxGrid() {
-    const grid = $('#fxGrid'); grid.innerHTML = '';
-    const list = state.fxTab === 'color' ? IrieFX.PRESETS : IrieFX.WARPS, now = state.fx[state.fxTab];
-    list.forEach(f => {
-      const b = document.createElement('button'); b.className = f.id === now ? 'on' : '';
-      const t = thumbs[state.fxTab][f.id]; if (t) { const c = document.createElement('canvas'); c.width = t.width; c.height = t.height; c.getContext('2d').drawImage(t, 0, 0); b.append(c); }
-      const l = document.createElement('span'); l.textContent = f.name; b.append(l);
-      b.onclick = () => { state.fx[state.fxTab] = f.id; syncFx(); commit(); renderEdit(); };
-      grid.append(b);
+    const cats = $('#editCats'), grid = $('#fxGrid'); cats.innerHTML = ''; grid.innerHTML = '';
+    const chip = (label, on, fn) => { const b = document.createElement('button'); b.textContent = label; b.className = on ? 'on' : ''; b.onclick = fn; cats.append(b); };
+    chip('None', state.fx.effect === 'none', () => pickEdit('none'));
+    IrieFX.CATS.forEach(c => chip(c.name, c.id === state.fxTab, () => { state.fxTab = c.id; renderFxGrid(); }));
+    chip('Random', false, () => { const o = allEffects().filter(e => e.id !== 'none'); if (o.length) pickEdit(o[Math.floor(Math.random() * o.length)].id); });
+    if (!glOK) { grid.textContent = 'Effects need WebGL, which this browser does not support.'; return; }
+    const src = state.photos.find(Boolean);
+    effectList(state.fxTab).forEach(e => {
+      const b = document.createElement('button'); b.className = e.id === state.fx.effect ? 'on' : '';
+      const c = document.createElement('canvas'); c.width = 96; c.height = 72; if (src) fillThumb(c, src, e.id, state.fx.strength / 100);
+      const l = document.createElement('span'); l.textContent = e.name; b.append(c, l);
+      b.onclick = () => pickEdit(e.id); grid.append(b);
     });
-    $$('.seg [data-fx]').forEach(b => b.classList.toggle('on', b.dataset.fx === state.fxTab));
   }
   function buildAdjust() {
     const box = $('#adjList'); box.innerHTML = '';
@@ -715,8 +802,8 @@
   function enterEdit() {
     const have = state.photos.filter(Boolean).length;
     if (cur().count > have) { const ok = layouts.find(l => l.count <= have); if (ok) state.layoutId = ok.id; }
-    state.compare = false; buildThumbs();
-    if (state.histIdx < 0) commit();
+    state.compare = false;
+    commit();
     syncAll(); renderEdit();
     const loads = FONTS.map(f => (document.fonts ? document.fonts.load(`${f.w} 40px ${f.css}`).catch(() => {}) : Promise.resolve()));
     Promise.all(loads).then(renderEdit);
@@ -726,19 +813,104 @@
     $$('.tabs button').forEach(b => b.classList.toggle('on', b.dataset.tab === name));
     $$('.tabpane').forEach(p => { p.hidden = p.id !== 'tab-' + name; });
   }
-  async function download() {
+  const toBlob = (c, type, q) => new Promise(res => c.toBlob(res, type, q));
+  function saveBlob(blob, name) {
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.append(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+  }
+  const stampName = () => { const d = new Date(), p = n => String(n).padStart(2, '0'); return `irie-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}`; };
+  async function renderFinal(width) {
     const L = cur(), c = document.createElement('canvas');
     await Promise.all(state.items.filter(it => it.type === 'img').map(it => imgReady(it.value)));
-    render(c, L, photosNow(), state.opts, +$('#sizeSel').value, { fx: state.fx, items: state.items, nocache: true });
-    c.toBlob(blob => {
-      if (!blob) { toast('Export failed. Try the Standard size.'); return; }
-      const a = document.createElement('a'), d = new Date(), p = n => String(n).padStart(2, '0');
-      a.href = URL.createObjectURL(blob);
-      a.download = `irie-${d.getFullYear()}${p(d.getMonth() + 1)}${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}${p(d.getSeconds())}.png`;
-      document.body.append(a); a.click(); a.remove();
-      setTimeout(() => URL.revokeObjectURL(a.href), 4000);
-      toast('Saved!');
-    }, 'image/png');
+    render(c, L, photosNow(), state.opts, width, { fx: state.fx, items: state.items, nocache: true });
+    return c;
+  }
+  async function download() {
+    const jpeg = $('#fmtSel').value === 'jpeg';
+    const c = await renderFinal(+$('#sizeSel').value);
+    const blob = await toBlob(c, jpeg ? 'image/jpeg' : 'image/png', 0.92);
+    if (workR) workR.canvas.width = workR.canvas.height = 1;
+    if (!blob) { toast('Export failed. Try the Standard size.'); return; }
+    saveBlob(blob, stampName() + (jpeg ? '.jpg' : '.png')); toast('Saved!');
+  }
+
+  /* ---------- gallery (IndexedDB, stays on this device) ---------- */
+  const DB = {
+    open() { return new Promise((res, rej) => { const r = indexedDB.open('irie', 1); r.onupgradeneeded = () => r.result.createObjectStore('creations', { keyPath: 'id' }); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); },
+    async run(mode, fn) {
+      const db = await this.open();
+      return new Promise((res, rej) => {
+        const t = db.transaction('creations', mode), q = fn(t.objectStore('creations'));
+        t.oncomplete = () => { db.close(); res(q ? q.result : undefined); };
+        t.onerror = t.onabort = () => { db.close(); rej(t.error); };
+      });
+    },
+    put(o) { return this.run('readwrite', s => s.put(o)); },
+    all() { return this.run('readonly', s => s.getAll()); },
+    del(id) { return this.run('readwrite', s => s.delete(id)); },
+    clear() { return this.run('readwrite', s => s.clear()); }
+  };
+  async function saveToGallery() {
+    try {
+      const L = cur();
+      const [final, thumb] = await Promise.all([toBlob(await renderFinal(1200), 'image/png'), renderFinal(360).then(c => toBlob(c, 'image/jpeg', 0.85))]);
+      const originals = [];
+      for (const p of state.photos) if (p) originals.push({ blob: await toBlob(p, 'image/jpeg', 0.92), seed: p._seed || 0 });
+      const d = new Date();
+      await DB.put({
+        id: 'c' + Date.now(), created: d.getTime(), name: 'irie ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+        layoutId: L.id, layoutName: L.name, final, thumb, originals,
+        project: { fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId }
+      });
+      toast('Saved to your gallery');
+    } catch { toast('Could not save here. Your browser may block local storage.'); }
+  }
+  async function convertBlob(blob, type) {
+    const bmp = await createImageBitmap(blob), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(bmp, 0, 0);
+    return toBlob(c, type, 0.92);
+  }
+  async function downloadRec(rec, jpeg) {
+    try { const blob = jpeg ? await convertBlob(rec.final, 'image/jpeg') : rec.final; saveBlob(blob, `irie-${rec.id}.${jpeg ? 'jpg' : 'png'}`); }
+    catch { toast('Could not download that one.'); }
+  }
+  async function openRec(rec) {
+    try {
+      const photos = [];
+      for (const o of rec.originals) {
+        const bmp = await createImageBitmap(o.blob), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+        c.getContext('2d').drawImage(bmp, 0, 0); c._seed = o.seed || 0; photos.push(tag(c));
+      }
+      const pj = rec.project;
+      state.photos = photos; state.fx = pj.fx; state.items = pj.items; state.opts = pj.opts; state.layoutId = pj.layoutId;
+      state.sel = null; state.hist = []; state.histIdx = -1; state.mode = 'new';
+      goTo('edit');
+    } catch { toast('Could not open that creation.'); }
+  }
+  let galleryUrls = [];
+  function recCard(rec, small) {
+    const card = document.createElement('div'); card.className = 'gcard glass';
+    const url = URL.createObjectURL(rec.thumb); galleryUrls.push(url);
+    const im = document.createElement('img'); im.src = url; im.alt = rec.name; im.onclick = () => (small ? goTo('gallery') : openRec(rec)); card.append(im);
+    if (small) return card;
+    const m = document.createElement('div'); m.className = 'meta'; m.textContent = rec.name + ' · ' + rec.layoutName; card.append(m);
+    const row = document.createElement('div'); row.className = 'row';
+    const mk = (t, fn) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = t; b.onclick = fn; row.append(b); };
+    mk('Edit', () => openRec(rec)); mk('PNG', () => downloadRec(rec, false)); mk('JPEG', () => downloadRec(rec, true));
+    mk('Delete', async () => { if (confirm('Delete this creation?')) { await DB.del(rec.id); renderGallery(); } });
+    card.append(row); return card;
+  }
+  async function loadAll() { try { return (await DB.all()).sort((a, b) => b.created - a.created); } catch { return []; } }
+  async function renderGallery() {
+    galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = [];
+    const list = await loadAll(), grid = $('#galleryGrid'); grid.innerHTML = '';
+    $('#galleryEmpty').hidden = list.length > 0; $('#clearGallery').hidden = !list.length;
+    list.forEach(r => grid.append(recCard(r, false)));
+  }
+  async function renderRecent() {
+    const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
+    $('#recentBlock').hidden = !list.length;
+    list.forEach(r => row.append(recCard(r, true)));
   }
 
   /* ---------- events ---------- */
@@ -773,6 +945,8 @@
   $('#captionInp').onchange = commit;
   $('#dateChk').onchange = e => { state.opts.date = e.target.checked; commit(); renderEdit(); };
   $('#downloadBtn').onclick = download;
+  $('#saveBtn').onclick = saveToGallery;
+  $('#clearGallery').onclick = async () => { if (confirm('Delete everything saved in this gallery? This cannot be undone.')) { await DB.clear(); renderGallery(); toast('Gallery cleared'); } };
 
   // toolbar
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
@@ -793,10 +967,14 @@
 
   // tabs + filters
   $$('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
-  $$('.seg [data-fx]').forEach(b => b.onclick = () => { state.fxTab = b.dataset.fx; renderFxGrid(); });
-  $('#fxStrength').oninput = e => { state.fx.strength = +e.target.value; renderEdit(); };
-  $('#warpStrength').oninput = e => { state.fx.warpStrength = +e.target.value; renderEdit(); };
-  $('#fxStrength').onchange = $('#warpStrength').onchange = commit;
+  $('#fxStrength').oninput = e => { state.fx.strength = +e.target.value; store.set('strength', state.fx.strength); renderEdit(); };
+  $('#fxStrength').onchange = () => { commit(); renderFxGrid(); };
+  $('#boothStrength').oninput = e => { state.fx.strength = +e.target.value; store.set('strength', state.fx.strength); };
+  $$('.fx-chips [data-cat]').forEach(b => b.onclick = () => { state.fxTab = b.dataset.cat; renderBoothFx(); });
+  $('#fxNone').onclick = () => setEffect('none');
+  $('#fxRandom').onclick = randomEffect;
+  $('#fxPrev').onclick = () => stepEffect(-1);
+  $('#fxNext').onclick = () => stepEffect(1);
   $('#fxReset').onclick = () => { state.fx = IrieFX.defaultFx(); syncFx(); commit(); renderEdit(); };
   $('#addText').onclick = () => { addText(); setTab('text'); };
   $('#addStamp').onclick = stamp;
@@ -834,6 +1012,6 @@
   addEventListener('pagehide', stopCamera);
 
   /* ---------- start ---------- */
-  buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers();
+  initGL(); buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers(); renderRecent();
   if (!layouts.find(l => l.id === state.layoutId)) state.layoutId = 'strip4';
 })();

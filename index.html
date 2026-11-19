@@ -17,6 +17,7 @@
   <nav aria-label="Main">
     <button data-go="home">Home</button>
     <button data-go="booth">Photobooth</button>
+    <button data-go="gallery">Gallery</button>
   </nav>
   <button id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme">◐</button>
 </header>
@@ -43,6 +44,11 @@
       </div>
     </div>
 
+    <div class="block" id="recentBlock" hidden>
+      <h2>Recently created</h2>
+      <div id="recentRow" class="gallery-grid small"></div>
+    </div>
+
     <div class="block">
       <h2>Pick a style</h2>
       <div id="homeStyles" class="layouts big-thumbs"></div>
@@ -52,9 +58,14 @@
   <!-- BOOTH -->
   <section id="booth" class="screen" hidden>
     <div class="booth-grid">
+      <div class="booth-main">
       <div id="stageWrap" class="stage-wrap">
         <div id="stage" class="stage">
           <video id="video" playsinline muted autoplay></video>
+          <canvas id="liveCanvas" class="live"></canvas>
+          <div id="fxLabel" class="fx-label"></div>
+          <button id="fxPrev" class="fx-arrow left" aria-label="Previous effect">‹</button>
+          <button id="fxNext" class="fx-arrow right" aria-label="Next effect">›</button>
           <div id="progress" class="progress" aria-live="polite"></div>
           <div id="countdown" class="countdown" aria-live="assertive"></div>
           <div id="flash" class="flash"></div>
@@ -73,11 +84,27 @@
         </div>
       </div>
 
+      <div class="fxbar">
+        <div class="fx-chips">
+          <button id="fxNone" class="chip">None</button>
+          <button data-cat="color" class="chip on">Color</button>
+          <button data-cat="warp" class="chip">Distortion</button>
+          <button data-cat="art" class="chip">Artistic</button>
+          <button id="fxRandom" class="chip">Random</button>
+        </div>
+        <div id="fxStrip" class="fx-strip"></div>
+        <p id="glMsg" class="hint" hidden>Live effects need WebGL, which this browser or device doesn't support. You can still take plain photos.</p>
+      </div>
+      </div>
+
       <aside class="panel glass" id="boothPanel">
         <div id="layoutBlock">
           <h3>Layout</h3>
           <div id="boothLayouts" class="layouts"></div>
         </div>
+        <label>Effect strength
+          <input type="range" id="boothStrength" min="0" max="100">
+        </label>
         <label>Countdown
           <select id="countdownSel">
             <option value="0">None</option>
@@ -119,6 +146,17 @@
     </div>
   </section>
 
+  <!-- GALLERY -->
+  <section id="gallery" class="screen" hidden>
+    <div class="center-col">
+      <h2>Your gallery</h2>
+      <p class="sub">Saved on this device only. Nothing is uploaded.</p>
+      <div id="galleryGrid" class="gallery-grid"></div>
+      <p id="galleryEmpty" class="sub" hidden>Nothing saved yet. Take some photos, then press Save to gallery.</p>
+      <button id="clearGallery" class="btn ghost" hidden>Delete all saved creations</button>
+    </div>
+  </section>
+
   <!-- EDIT / DOWNLOAD -->
   <section id="edit" class="screen" hidden>
     <div class="edit-grid">
@@ -137,7 +175,12 @@
             <option value="1200">Standard (1200 px)</option>
             <option value="1800">High (1800 px)</option>
           </select>
-          <button id="downloadBtn" class="btn primary">Download PNG</button>
+          <select id="fmtSel" aria-label="File type">
+            <option value="png">PNG</option>
+            <option value="jpeg">JPEG</option>
+          </select>
+          <button id="saveBtn" class="btn ghost">Save to gallery</button>
+          <button id="downloadBtn" class="btn primary">Download</button>
         </div>
         <p class="hint center-text">On iPhone, the image opens in a new tab. Press and hold it to save.</p>
       </div>
@@ -196,13 +239,9 @@
         </div>
 
         <div class="tabpane" id="tab-filters" hidden>
-          <div class="seg">
-            <button data-fx="color" class="on">Color</button>
-            <button data-fx="warp">Warp</button>
-          </div>
+          <div class="seg wrap" id="editCats"></div>
           <div id="fxGrid" class="fx-grid"></div>
-          <label>Filter strength <input type="range" id="fxStrength" min="0" max="100"></label>
-          <label id="warpStrRow" hidden>Warp strength <input type="range" id="warpStrength" min="0" max="100"></label>
+          <label>Effect strength <input type="range" id="fxStrength" min="0" max="100"></label>
           <details>
             <summary>Adjustments</summary>
             <div id="adjList" class="stack"></div>

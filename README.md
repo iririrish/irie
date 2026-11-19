@@ -16,9 +16,21 @@ A simple online photobooth for **crismiel and irish**. Take photos with your cam
 - Download as PNG (Standard 1200 px or High 1800 px wide)
 - Light and dark theme, pink + purple glass look
 
+**Phase 3 – Webcam Toy (live effects)**
+- See effects **live on the camera** before you take the picture. Switch effects instantly without restarting the camera.
+- 38 effects in three categories, each with a live thumbnail:
+  - **Color:** Black & White, Sepia, Vintage, Retro, Lomo, Warm Tone, Cool Tone, Faded, Pastel, Matte, High Contrast, Cinematic, Negative, Thermal, Night Vision, Neon, Underwater, Citrus, Bloom, Dreamy
+  - **Distortion:** Fisheye, Bulge, Pinch, Ripple, Spiral, Twist, Stretch, Wave
+  - **Artistic:** Cartoon, Comic Book, Sketch, Pixelate, Posterize, Glitch, Kaleidoscope, Mirror, Double Vision, Crosshatch
+- None and Random buttons, previous / next arrows on the camera (they work in fullscreen too), and an effect strength slider.
+- The photo you capture is saved as the **untouched original**. The effect is applied on top, so you can change or remove it later in the editor.
+- The downloaded image uses the same shaders as the live preview, so they match.
+- **Save to gallery** (stored on your device with IndexedDB): keeps the finished picture, the original photos and your edits. Open the **Gallery** page to edit again, download as PNG or JPEG, delete one, or delete everything.
+- Download as **PNG or JPEG** from the editor.
+- Recently saved creations show on the home page.
+
 **Phase 2 – editing**
-- **Filters:** 19 color filters (Black & White, Vintage, Retro, Warm, Cool, Bloom, Citrus, Neon, Night Vision, Thermal, Underwater, Sepia, Faded Film, Pastel, Cinematic, Dreamy, High Contrast, Matte) with live thumbnails and a strength slider
-- **Warp effects:** Fisheye, Bulge, Pinch, Ripple, Spiral, Stretch, Twist, Wave, Mirror, Kaleidoscope with a strength slider
+- **Filters:** the same effect gallery as the live camera (see Phase 3), with a strength slider
 - **Adjustments:** brightness, contrast, saturation, exposure, temperature, tint, highlights, shadows, sharpness, vignette, grain (double-click a slider to reset it), plus a Reset button
 - **Hold to compare:** press and hold the button to see the original photos
 - **Stickers:** built-in emoji in 10 categories, plus your own PNGs from `stickers/`
@@ -36,6 +48,8 @@ Camera access needs **https** or **localhost**.
 
 Opening `index.html` by double-click will show the page, but the camera and `frames/` will not load.
 
+Live effects need **WebGL**, which all current desktop and phone browsers have. Without it, irie still takes plain photos and shows a note instead of the effects.
+
 ## Folder structure
 
 ```
@@ -43,7 +57,7 @@ index.html        the page
 style.css         look and feel
 app.js            all the logic
 frames/           your photobooth frame designs (PNG) + frames.json
-fx.js             filters, adjustments and warp effects
+fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
 ```
@@ -78,10 +92,34 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 
 ## Roadmap
 
-- **Phase 3:** more layouts, artistic effects (cartoon, sketch, pop art...), mirror and multi-camera effects, themes, per-photo filters
-- **Phase 4:** personal gallery saved on the device (IndexedDB)
+- ~~**Phase 3 – Webcam Toy**~~ **(done, see above):** see filters and effects live on the camera before taking a picture.
+  - Live camera preview with the selected effect applied, camera switching, mirror toggle and fullscreen.
+  - Effect gallery with live thumbnails, grouped in categories, with instant switching, a Random button and a None option.
+    - **Color:** Black & White, Sepia, Vintage, Lomo, Cool Tone, Warm Tone, Faded, High Contrast, Negative, Thermal
+    - **Distortion:** Fisheye, Bulge, Pinch, Ripple, Spiral, Twist, Stretch, Wave
+    - **Artistic:** Cartoon, Comic Book, Sketch, Pixelate, Posterize, Glitch, Kaleidoscope, Mirror, Double Vision, Crosshatch
+  - Capture with countdown, multiple photos, retake or keep.
+  - Save results to a basic on-device gallery (IndexedDB), download as PNG or JPEG.
+  - The original photo is kept separately from the edited version, and downloads match the live preview.
+  - Built on WebGL for smooth live effects (with a CSS-filter fallback), shared with the editor so previews and exports match.
+  - Inspired by the idea of live webcam effects only. irie keeps its own look and branding.
+- **Phase 4:** more layouts, themes, per-photo filters, split-screen and multi-camera effects, more artistic effects (watercolor, pop art, halftone)
+- **Phase 5:** full gallery management (rename, favorite, sort by date, filter by layout)
 
 ## Changelog
+
+### v0.3.0 – 2026-11-19
+- Phase 3 (Webcam Toy): live effects on the camera preview, powered by a new WebGL engine in `fx.js` (replaces the old pixel-by-pixel filters).
+- 38 effects with live thumbnails, category tabs, None, Random, previous / next arrows and a strength slider.
+- New effects: Lomo, Negative, Cartoon, Comic Book, Sketch, Pixelate, Posterize, Glitch, Double Vision, Crosshatch. Kaleidoscope and Mirror moved to Artistic.
+- Captured photos keep the untouched original; effects are applied on top and can be changed in the editor.
+- The editor, review screen and download use the same shaders as the live preview, so they match.
+- Adjustment sliders (brightness, contrast, etc.) now run on the same engine.
+- New Gallery page (IndexedDB): save creations with their originals, edit again, download PNG or JPEG, delete one or all.
+- JPEG download option in the editor. Recently saved creations on the home page.
+
+### v0.2.1 – 2026-11-19
+- Roadmap updated: added **Phase 3 – Webcam Toy** (live camera effects). Previous Phase 3 and 4 are now Phase 4 and 5. No code changes.
 
 ### v0.2.0 – 2026-11-19
 - Phase 2: new editor with Design, Filters, Stickers and Text tabs.
