@@ -219,6 +219,12 @@ Custom frame images that switch with each theme, more themes, a portrait-shaped 
 
 ## Changelog
 
+### v0.8.2 – 2026-11-20
+- **Pixel Pastel Town** now follows the concept board more closely: "Pick a style" sits in the taskbar as text links (Photo, 4-cut, Polaroid, Film, Collage), "Recently created ▸ N strips" is a small badge above the taskbar, and the taskbar has the irie badge and menu on the left with the icon buttons on the right.
+- New, cleaner **settings (gear) icon**.
+- The page now fills the screen exactly, so the **home page no longer scrolls**. The extra space below the content is gone on every page.
+- Home "Pick a style" bar now shows 5 styles (Photo, 4-cut, Polaroid, Film, Collage). The full list is still on the camera page.
+
 ### v0.8.1 – 2026-11-20
 - The original pink and purple glass look is back and is the default theme, now called **Classic Glass**. Candy Bento is removed.
 - The home page now fits on **one screen with no scrolling**: headline, buttons and strip previews on top, and a slim bar at the bottom with **Pick a style** (small thumbnails) and **Recently created** (up to 3). The camera screen is a little shorter too.

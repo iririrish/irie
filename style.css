@@ -329,3 +329,10 @@ details summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 *::-webkit-scrollbar-track{background:transparent}
 *::-webkit-scrollbar-thumb{background:rgba(124,77,255,.5);border-radius:8px}
 *::-webkit-scrollbar-thumb:hover{background:rgba(124,77,255,.75)}
+
+/* ---- fill the screen exactly: no extra space below ---- */
+body{min-height:100dvh;display:flex;flex-direction:column}
+main{flex:1 1 auto;display:flex;flex-direction:column;min-height:0;padding:16px 0 20px}
+main>.screen{flex:0 0 auto}
+main>#home{flex:1 1 0;min-height:0;overflow:hidden;overflow:clip;padding:6px 16px 16px 6px;grid-template-rows:1fr auto}
+.dock-count{display:none}

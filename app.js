@@ -336,7 +336,7 @@
       const b = document.createElement('button');
       b.className = 'layout-btn' + (L.id === state.layoutId ? ' on' : '');
       b.disabled = !!filter && !filter(L);
-      b.title = L.name; b.setAttribute('aria-label', L.name);
+      b.title = L.name; b.setAttribute('aria-label', L.name); if (SHORT[L.id]) b.dataset.short = SHORT[L.id];
       if (b.disabled) b.title = L.name + ' (needs more photos than you took)';
       const c = document.createElement('canvas');
       render(c, L, null, { ...state.opts, caption: '', date: false }, 160);
@@ -352,7 +352,8 @@
     refreshPickers();
     if (state.screen === 'edit') { commit(); renderEdit(); renderPhotos(); }
   }
-  const HOME_STYLES = ['plain', 'strip4', 'strip3', 'hstrip', 'grid22', 'polaroid', 'film', 'collage'];
+  const HOME_STYLES = ['plain', 'strip4', 'polaroid', 'film', 'collage'];
+  const SHORT = { plain: 'Photo', strip4: '4-cut', polaroid: 'Polaroid', film: 'Film', collage: 'Collage' };
   function refreshPickers() {
     buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); }, HOME_STYLES);
     buildPicker($('#boothLayouts'), null, setLayout);
@@ -1190,14 +1191,15 @@
     showStorage();
   }
   async function renderRecent() {
-    const list = (await loadAll()).slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
-    $('#recentBlock').hidden = !list.length;
+    const all = await loadAll(), list = all.slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
+    $('#recentBlock').hidden = !list.length; $('#recentCount').textContent = '▸ ' + all.length + (all.length === 1 ? ' strip' : ' strips');
     list.forEach(r => {
       const b = document.createElement('button'); b.className = 'dock-thumb'; b.setAttribute('aria-label', 'Open the gallery: ' + r.name);
       const im = document.createElement('img'); im.alt = '';
       if (r.thumbUrl) im.src = r.thumbUrl; else { const u = URL.createObjectURL(r.thumb); im.src = u; im.onload = () => URL.revokeObjectURL(u); }
       b.append(im); b.onclick = () => goTo('gallery'); row.append(b);
     });
+    $('#recentBlock').onclick = () => goTo('gallery');
   }
 
   /* ---------- events ---------- */
