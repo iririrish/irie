@@ -63,61 +63,45 @@ The gallery uses your browser's built-in storage (IndexedDB), so everything stay
 
 ## Passcode
 
-The very first thing anyone sees is a full-screen **"Enter the password"** page with a number keypad. The rest of the site stays hidden until the right 4-digit code is entered. There is no sign-in. You can tap the keypad or type the digits on a keyboard. Tick "Remember me on this device" to skip it next time, or press the lock button in the top bar to lock again.
+irie asks for a 4-digit passcode before you can use it. There is no sign-in. Tick "Remember me on this device" to skip it next time, or press the lock button in the top bar to lock again.
 
 **Please note:** this is a casual lock to keep strangers out of a personal site. It runs in the browser, so anyone who is good with developer tools could get past it. It does not protect the shared gallery's storage (see below). Don't put anything private on it.
 
 To change the passcode: open the site, open the browser console (F12), type `irieHash('1234')` with your new number, and paste the result into `PASS_HASH` in `lock.js`.
 
-## Settings and themes
-
-Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. **Classic Glass** (the default) and **Pixel Pastel Town** are ready so far. The other four are shown as "Coming soon" and are built in Phases 8 and 9.
-
 ## Shared gallery (optional)
 
 By default each person's saved pictures live only on their own device. To let everyone who has the passcode see the same gallery, irie can use a free [Supabase](https://supabase.com) project as shared storage. No sign-in is needed for visitors.
 
-### Step 1. Create your Supabase project
-1. Go to **supabase.com** and press **Start your project**. Sign up with GitHub or an email.
-2. Press **New project** (if it asks for an organization, create one with any name and choose the **Free** plan).
-3. Fill in: **Name** `irie`, **Database password** (press Generate and save it somewhere; irie never uses it), **Region** the closest one to you (for the Philippines, choose Southeast Asia / Singapore).
-4. Press **Create new project** and wait about 2 minutes until the dashboard finishes setting up.
+1. Create a free Supabase account and a new project.
+2. In the project, open **SQL Editor**, paste this and press Run:
 
-### Step 2. Create the storage
-1. In the left menu, open **SQL Editor** (the `</>` icon), then **New query**.
-2. Copy the whole SQL block above, paste it in, and press **Run**. You should see "Success. No rows returned."
-3. Check it worked: **Table Editor** should list a table called `creations`, and **Storage** should list a bucket called `irie` marked Public.
-4. If you see "already exists", you ran it twice. That is fine.
+```sql
+create table creations (
+  id text primary key,
+  created bigint not null,
+  name text not null,
+  layout_id text, layout_name text, theme_id text, theme_name text,
+  favorite boolean default false,
+  final_path text not null, thumb_path text not null,
+  originals jsonb default '[]', project jsonb
+);
+alter table creations enable row level security;
+create policy "read" on creations for select using (true);
+create policy "add" on creations for insert with check (true);
+create policy "change" on creations for update using (true) with check (true);
+create policy "remove" on creations for delete using (true);
 
-### Step 3. Copy your two values
-1. Open **Project Settings** (gear icon, bottom left), then **API Keys** (it may be called **API**).
-2. Copy the **Project URL**. It looks like `https://abcdefgh.supabase.co`.
-3. Copy the public key. Either one works: the **anon** key (starts with `eyJ`, sometimes under "Legacy API keys") or the **publishable** key (starts with `sb_publishable_`). Never copy the `service_role` or `secret` key.
-
-### Step 4. Put them in irie
-1. On GitHub, open your irie repository and click `config.js`, then the pencil icon (Edit).
-2. Paste each value between the quotes, with no spaces:
-
-```js
-window.IRIE_CONFIG = {
-  supabaseUrl: 'https://abcdefgh.supabase.co',
-  supabaseKey: 'eyJ...your key...'
-};
+insert into storage.buckets (id, name, public) values ('irie', 'irie', true);
+create policy "read files" on storage.objects for select using (bucket_id = 'irie');
+create policy "add files" on storage.objects for insert with check (bucket_id = 'irie');
+create policy "remove files" on storage.objects for delete using (bucket_id = 'irie');
 ```
 
-3. Press **Commit changes**. GitHub Pages updates in about a minute. Then open irie and refresh the page with Ctrl+F5 (on a phone, close the tab and open it again).
+3. Open **Project Settings → API**. Copy the **Project URL** and the **anon public** key.
+4. Paste them into `config.js` and upload it to GitHub.
 
-### Step 5. Test it
-1. Open irie, enter the passcode, take a picture, go to the editor and press **Save to gallery**. You should see "Saved to the shared gallery".
-2. Open the **Gallery** page. Your picture is there, and the note under the title says "Shared gallery".
-3. Open irie on another phone or browser, enter the passcode, and open the Gallery. You should see the same picture.
-4. In Supabase, **Table Editor → creations** shows a new row, and **Storage → irie** shows a folder with the image files.
-
-### If something goes wrong
-- **"Could not reach the shared gallery":** check `config.js` for a typo, a missing quote, or an extra space. Then press F12, open the **Network** tab, save again, and look at the red line. `401` or `403` means the key is wrong or Step 2 was skipped. `404` means the `creations` table is missing. A message about "row-level security" means the policies in Step 2 did not run.
-- **The page still says "Saved on this device only":** `config.js` is still empty or the browser kept the old version. Refresh with Ctrl+F5.
-- **The project stopped working after a quiet week:** free Supabase projects pause when nobody uses them. Open the dashboard and press **Restore project**.
-- **Space:** the free plan gives 1 GB of file storage. Each saved picture uses roughly 1 to 4 MB, so it holds hundreds.
+When both values are filled in, "Save to gallery" saves to the shared gallery and the Gallery page shows everyone's pictures. Leave them empty to keep pictures on each device.
 
 **What "public" means here:** the gallery is open to anyone who has the site address and the key in `config.js`, because there is no sign-in. The passcode is only a front door. Anyone can also delete pictures, and "Delete all" removes them for everybody, so use it carefully. Favorites, names and delete work for the whole group.
 
@@ -140,9 +124,6 @@ style.css         look and feel
 app.js            all the logic
 frames/           your photobooth frame designs (PNG) + frames.json
 fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
-lock.js           the passcode page
-theme.js          the theme list and the Settings panel
-themes/           one stylesheet per extra theme (pixel.css) and theme images (see themes/README.md). The default look lives in style.css
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
 ```
@@ -177,80 +158,9 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 
 ## Roadmap
 
-Phases 1 to 7 are done (see above). The next phases are the **kawaii redesign with switchable themes**. Phases 8 to 10 are planned, not built yet.
-
-### The six themes (design concepts)
-Ready now: Classic Glass and Pixel Pastel Town. (Candy Bento was tried and removed.)
-Picked from the concept boards. The visitor chooses one in **Settings**, and irie remembers it on that device.
-
-1. **Classic Glass** (default): the original pink and purple glass look.
-2. **Pixel Pastel Town**: pixel city background, chunky pixel buttons, pixel font, taskbar-style menu.
-3. **Night Garden**: night garden background, glass cards, drifting firefly lights.
-4. **Y2K Desktop**: sparkle-grid background, desktop windows, glossy bubble buttons, taskbar clock.
-5. **Sticker Book**: notebook page, paper tabs, taped photos, handwritten titles.
-6. **Halftone Pop Zine**: halftone pink background, bold collage, menu rail down the left side.
-
-All six keep the same content and features. Only the look, fonts, backgrounds, menu style and small animations change.
-
-### Phase 6: Passcode page and theme setting (done)
-- The passcode becomes its **own full-screen page**, the first thing anyone sees. The rest of the site stays hidden until the right passcode is entered.
-- The lock page uses the big **"Enter the password" keypad** (from your pink pixel reference): number buttons, dots for typed digits, shake on a wrong code. On phones it uses the number keypad. "Remember me on this device" and the lock button stay.
-- The small keypad card from the concepts is not used, because the lock is now a separate page.
-- A **Settings** panel with a **Theme** picker (a preview card for each theme). The choice is saved on the device and is also used for the lock page.
-- The current look is reorganized into theme files so every theme shares the same features.
-
-### Phase 7: Themes 1 and 2 (done: home page, passcode page and Settings; the other pages get their final look in Phase 10)
-- Build the default look and **Pixel Pastel Town** for the home page and lock page.
-- Your background images go in a `themes/` folder on GitHub (resized so pages load fast).
-
-### Phase 8: Themes 3 and 4
-- Build **Night Garden** and **Y2K Desktop**.
-
-### Phase 9: Themes 5 and 6
-- Build **Sticker Book** and **Halftone Pop Zine**.
-
-### Phase 10: Every page, every theme, polish
-- Apply all six themes to the camera, review, editor and gallery pages, not just the home page.
-- Phone layouts, keyboard use, contrast checks, and reduced-motion support for the animations.
-- Faster loading (smaller background images), then a full test of the whole site.
-
-### Ideas for later
-Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
+All five planned phases are done. Ideas for later: custom frame images that switch with each theme, more themes, portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
-
-### v0.8.2 – 2026-11-20
-- **Pixel Pastel Town** now follows the concept board more closely: "Pick a style" sits in the taskbar as text links (Photo, 4-cut, Polaroid, Film, Collage), "Recently created ▸ N strips" is a small badge above the taskbar, and the taskbar has the irie badge and menu on the left with the icon buttons on the right.
-- New, cleaner **settings (gear) icon**.
-- The page now fills the screen exactly, so the **home page no longer scrolls**. The extra space below the content is gone on every page.
-- Home "Pick a style" bar now shows 5 styles (Photo, 4-cut, Polaroid, Film, Collage). The full list is still on the camera page.
-
-### v0.8.1 – 2026-11-20
-- The original pink and purple glass look is back and is the default theme, now called **Classic Glass**. Candy Bento is removed.
-- The home page now fits on **one screen with no scrolling**: headline, buttons and strip previews on top, and a slim bar at the bottom with **Pick a style** (small thumbnails) and **Recently created** (up to 3). The camera screen is a little shorter too.
-- **Thin scrollbars** in every theme (square pixel-style ones in Pixel Pastel Town).
-- **Pixel Pastel Town** rebuilt to match the concept board: a pixel panel with the "irie.exe" tagline, tilted pixel strip and polaroid frames, twinkling hearts, a pixel-style "Pick a style" bar, the taskbar menu along the bottom, and the pixel-city passcode page.
-- Removed `themes/candy.css`.
-
-### v0.8.0 – 2026-11-20
-- Phase 7: **Candy Bento** home page is now a bento layout (hero card, steps card, recently created card, pick a style card), with puffy Fredoka and Nunito styling. The small keypad card is gone, since the passcode is its own page.
-- New **Pixel Pastel Town** theme: your pixel city as the background, Press Start 2P and VT323 fonts, chunky pixel buttons, solid pixel panels, a taskbar-style menu along the bottom, twinkling pixel hearts, and a pixel-city passcode page.
-- Pick either theme in Settings. The choice is saved and used from the very first screen.
-- "Recently created" is always shown on the home page, with a short note when nothing is saved yet.
-- New files: `themes/candy.css`, `themes/pixel.css`, `themes/images/pixel-city.jpg`.
-
-### v0.7.0 – 2026-11-20
-- Phase 6: the passcode is now its own full-screen page with a number keypad ("Enter the password"), pixel hearts and clouds, dots for typed digits, a delete key, and keyboard typing.
-- New **Settings** panel (gear button): theme picker with a card for each of the six themes, and a Light / Dark switch. The choice is saved per device and the passcode page follows it.
-- Candy Bento is the current look. The other five themes show "Coming soon".
-- New files: `theme.js`, `themes/README.md`. The lock button and settings button now use drawn icons.
-
-### v0.6.2 – 2026-11-20
-- Roadmap updated with phases 6 to 10: separate passcode page, theme setting with six themes, and applying the themes to every page. No code changes.
-
-### v0.6.1 – 2026-11-19
-- Shared gallery setup guide in the README is now step by step, with troubleshooting.
-- Shared gallery now also works with Supabase's newer `sb_publishable_` keys, and ignores spaces or a trailing slash in the URL.
 
 ### v0.6.0 – 2026-11-19
 - **Passcode screen** (4 digits) before entering irie, with a "Remember me on this device" option and a lock button. No sign-in. New file `lock.js`.

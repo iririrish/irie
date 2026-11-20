@@ -330,14 +330,13 @@
   }
 
   /* ---------- pickers ---------- */
-  function buildPicker(el, filter, onPick, only) {
+  function buildPicker(el, filter, onPick) {
     el.innerHTML = '';
-    for (const L of (only ? layouts.filter(l => only.includes(l.id)) : layouts)) {
+    for (const L of layouts) {
       const b = document.createElement('button');
       b.className = 'layout-btn' + (L.id === state.layoutId ? ' on' : '');
       b.disabled = !!filter && !filter(L);
-      b.title = L.name; b.setAttribute('aria-label', L.name); if (SHORT[L.id]) b.dataset.short = SHORT[L.id];
-      if (b.disabled) b.title = L.name + ' (needs more photos than you took)';
+      if (b.disabled) b.title = 'Needs more photos than you took';
       const c = document.createElement('canvas');
       render(c, L, null, { ...state.opts, caption: '', date: false }, 160);
       const t = document.createElement('span'); t.textContent = L.name;
@@ -352,10 +351,8 @@
     refreshPickers();
     if (state.screen === 'edit') { commit(); renderEdit(); renderPhotos(); }
   }
-  const HOME_STYLES = ['plain', 'strip4', 'polaroid', 'film', 'collage'];
-  const SHORT = { plain: 'Photo', strip4: '4-cut', polaroid: 'Polaroid', film: 'Film', collage: 'Collage' };
   function refreshPickers() {
-    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); }, HOME_STYLES);
+    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); });
     buildPicker($('#boothLayouts'), null, setLayout);
     const have = state.photos.filter(Boolean).length;
     buildPicker($('#editLayouts'), L => L.count <= have, setLayout);
@@ -1022,15 +1019,9 @@
   };
   /* ---------- shared gallery (optional, Supabase) ---------- */
   const CFG = window.IRIE_CONFIG || {};
-  if (CFG.supabaseUrl) CFG.supabaseUrl = String(CFG.supabaseUrl).trim().replace(/\/+$/, '');
   const Cloud = {
     on: !!(CFG.supabaseUrl && CFG.supabaseKey),
-    // (the URL is cleaned of spaces and a trailing slash below)
-    h(extra) {
-      const k = String(CFG.supabaseKey).trim(), base = { apikey: k };
-      if (k.startsWith('eyJ')) base.Authorization = 'Bearer ' + k;   // older-style keys are sent this way; newer sb_publishable_ keys use apikey only
-      return { ...base, ...(extra || {}) };
-    },
+    h(extra) { return { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey, ...(extra || {}) }; },
     pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
     async upload(path, blob) {
       const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });
@@ -1191,15 +1182,9 @@
     showStorage();
   }
   async function renderRecent() {
-    const all = await loadAll(), list = all.slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
-    $('#recentBlock').hidden = !list.length; $('#recentCount').textContent = '▸ ' + all.length + (all.length === 1 ? ' strip' : ' strips');
-    list.forEach(r => {
-      const b = document.createElement('button'); b.className = 'dock-thumb'; b.setAttribute('aria-label', 'Open the gallery: ' + r.name);
-      const im = document.createElement('img'); im.alt = '';
-      if (r.thumbUrl) im.src = r.thumbUrl; else { const u = URL.createObjectURL(r.thumb); im.src = u; im.onload = () => URL.revokeObjectURL(u); }
-      b.append(im); b.onclick = () => goTo('gallery'); row.append(b);
-    });
-    $('#recentBlock').onclick = () => goTo('gallery');
+    const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
+    $('#recentBlock').hidden = !list.length;
+    list.forEach(r => row.append(recCard(r, true)));
   }
 
   /* ---------- events ---------- */
