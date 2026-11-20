@@ -330,13 +330,14 @@
   }
 
   /* ---------- pickers ---------- */
-  function buildPicker(el, filter, onPick) {
+  function buildPicker(el, filter, onPick, only) {
     el.innerHTML = '';
-    for (const L of layouts) {
+    for (const L of (only ? layouts.filter(l => only.includes(l.id)) : layouts)) {
       const b = document.createElement('button');
       b.className = 'layout-btn' + (L.id === state.layoutId ? ' on' : '');
       b.disabled = !!filter && !filter(L);
-      if (b.disabled) b.title = 'Needs more photos than you took';
+      b.title = L.name; b.setAttribute('aria-label', L.name);
+      if (b.disabled) b.title = L.name + ' (needs more photos than you took)';
       const c = document.createElement('canvas');
       render(c, L, null, { ...state.opts, caption: '', date: false }, 160);
       const t = document.createElement('span'); t.textContent = L.name;
@@ -351,8 +352,9 @@
     refreshPickers();
     if (state.screen === 'edit') { commit(); renderEdit(); renderPhotos(); }
   }
+  const HOME_STYLES = ['plain', 'strip4', 'strip3', 'hstrip', 'grid22', 'polaroid', 'film', 'collage'];
   function refreshPickers() {
-    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); });
+    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); }, HOME_STYLES);
     buildPicker($('#boothLayouts'), null, setLayout);
     const have = state.photos.filter(Boolean).length;
     buildPicker($('#editLayouts'), L => L.count <= have, setLayout);
@@ -1188,9 +1190,14 @@
     showStorage();
   }
   async function renderRecent() {
-    const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
-    $('#recentEmpty').hidden = list.length > 0;
-    list.forEach(r => row.append(recCard(r, true)));
+    const list = (await loadAll()).slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
+    $('#recentBlock').hidden = !list.length;
+    list.forEach(r => {
+      const b = document.createElement('button'); b.className = 'dock-thumb'; b.setAttribute('aria-label', 'Open the gallery: ' + r.name);
+      const im = document.createElement('img'); im.alt = '';
+      if (r.thumbUrl) im.src = r.thumbUrl; else { const u = URL.createObjectURL(r.thumb); im.src = u; im.onload = () => URL.revokeObjectURL(u); }
+      b.append(im); b.onclick = () => goTo('gallery'); row.append(b);
+    });
   }
 
   /* ---------- events ---------- */

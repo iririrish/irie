@@ -2,21 +2,21 @@
    Each theme is a look for the whole site. Only themes marked ready can be chosen; the rest show "Coming soon". */
 (() => {
   const SKINS = [
-    { id: 'candy', name: 'Candy Bento', note: 'Soft pink and lilac, puffy buttons', sw: 'linear-gradient(135deg,#ffc2e0,#d9c9ff)' },
+    { id: 'classic', name: 'Classic Glass', note: 'The original pink and purple glass look', sw: 'linear-gradient(135deg,#ffc2e0,#d9c9ff)' },
     { id: 'pixel', name: 'Pixel Pastel Town', note: 'Pixel city, chunky pixel buttons', sw: 'url(themes/images/pixel-city.jpg) center/cover' },
     { id: 'night', name: 'Night Garden', note: 'Night garden, glass cards, fireflies', sw: 'linear-gradient(135deg,#1b2159,#ffd77a)' },
     { id: 'y2k', name: 'Y2K Desktop', note: 'Sparkle grid, windows, bubble buttons', sw: 'linear-gradient(135deg,#cdb8ff,#ff9ad5)' },
     { id: 'sticker', name: 'Sticker Book', note: 'Notebook page, tabs, taped photos', sw: 'linear-gradient(135deg,#fff8ec,#ffc2e0)' },
     { id: 'zine', name: 'Halftone Pop Zine', note: 'Bold collage, halftone dots', sw: 'linear-gradient(135deg,#ff6fb7,#8b5cf6)' }
   ];
-  const READY = window.IRIE_SKINS_READY || ['candy'];
+  const READY = window.IRIE_SKINS_READY || ['classic'];
   SKINS.forEach(s => { s.ready = READY.includes(s.id); });
   const root = document.documentElement, $ = s => document.querySelector(s);
   const get = k => { try { return JSON.parse(localStorage.getItem('irie.' + k)); } catch { return null; } };
   const set = (k, v) => { try { localStorage.setItem('irie.' + k, JSON.stringify(v)); } catch { /* ignore */ } };
 
   function loadCss(id) {   // a ready theme other than the default brings its own stylesheet: themes/<id>.css
-    if (id === 'candy' || document.getElementById('skin-css-' + id)) return;
+    if (id === 'classic' || document.getElementById('skin-css-' + id)) return;
     const l = document.createElement('link'); l.rel = 'stylesheet'; l.id = 'skin-css-' + id; l.href = 'themes/' + id + '.css'; document.head.append(l);
   }
   function applySkin(id) {
@@ -24,7 +24,7 @@
     loadCss(s.id); root.dataset.skin = s.id; set('skin', s.id); render();
   }
   function render() {
-    const cur = root.dataset.skin || 'candy', box = $('#skinList'); box.innerHTML = '';
+    const cur = root.dataset.skin || 'classic', box = $('#skinList'); box.innerHTML = '';
     SKINS.forEach(s => {
       const b = document.createElement('button'); b.className = 'skin' + (s.id === cur ? ' on' : '');
       b.setAttribute('aria-pressed', String(s.id === cur));
@@ -43,7 +43,7 @@
   function closeSettings() { $('#settings').hidden = true; if (opener && opener.focus) opener.focus(); }
 
   document.addEventListener('DOMContentLoaded', () => {
-    loadCss(root.dataset.skin || 'candy');
+    loadCss(root.dataset.skin || 'classic');
     $('#settingsBtn').onclick = openSettings; $('#setClose').onclick = closeSettings;
     $('#settings').addEventListener('click', e => { if (e.target.id === 'settings') closeSettings(); });
     document.addEventListener('keydown', e => { if (e.key === 'Escape' && !$('#settings').hidden) closeSettings(); });

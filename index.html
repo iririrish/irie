@@ -7,9 +7,8 @@
   <meta name="description" content="irie is a simple online photobooth. Take photos, pick a layout, download your strip.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Fredoka:wght@500;600;700&family=Nunito:wght@600;700&family=Pacifico&family=Permanent+Marker&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Fredoka:wght@500;600;700&family=Pacifico&family=Permanent+Marker&display=swap">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="themes/candy.css">
   <script src="lock.js"></script>
 </head>
 <body>
@@ -48,43 +47,35 @@
 
   <!-- HOME -->
   <section id="home" class="screen">
-    <div class="home-grid">
-      <div class="h-card h-hero">
-        <div class="hero-text">
-          <h1><span class="hl hl-pink">crismiel</span> and <span class="hl hl-purple">irish</span> own little photobooth</h1>
-          <p class="tagline">saving memories</p>
-          <p id="leadText" class="lead">Take a few photos, pick a layout, download your strip. Everything stays on your device.</p>
-          <div class="cta">
-            <button id="startBtnHome" class="btn primary big">Start Photobooth</button>
-            <button id="uploadBtnHome" class="btn ghost big">Upload Photos</button>
-          </div>
-          <p class="flow">Capture → Customize → Download</p>
+    <div class="home-hero">
+      <div class="hero-text">
+        <h1><span class="hl hl-pink">crismiel</span> and <span class="hl hl-purple">irish</span> own little photobooth</h1>
+        <p class="tagline">saving memories</p>
+        <p id="leadText" class="lead">Take a few photos, pick a layout, download your strip. Everything stays on your device.</p>
+        <div class="cta">
+          <button id="startBtnHome" class="btn primary big">Start Photobooth</button>
+          <button id="uploadBtnHome" class="btn ghost big">Upload Photos</button>
         </div>
-        <div class="hero-stack" aria-hidden="true">
-          <canvas id="heroA"></canvas>
-          <canvas id="heroB"></canvas>
-          <canvas id="heroC"></canvas>
-        </div>
+        <p class="flow">Capture → Customize → Download</p>
       </div>
-
-      <div class="h-card h-steps">
-        <h2>Capture → Customize → Download</h2>
-        <ol class="steps">
-          <li class="on"><b>1</b> Capture</li>
-          <li><b>2</b> Customize</li>
-          <li><b>3</b> Download</li>
-        </ol>
+      <div class="hero-stack" aria-hidden="true">
+        <canvas id="heroA"></canvas>
+        <canvas id="heroB"></canvas>
+        <canvas id="heroC"></canvas>
+        <div class="px px-strip"><i></i><i></i><i></i><i></i></div>
+        <div class="px px-polaroid"><i></i></div>
+        <svg class="px px-heart ph1" viewBox="0 0 7 6" shape-rendering="crispEdges"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="#ff5fa2"/></svg>
+        <svg class="px px-heart ph2" viewBox="0 0 7 6" shape-rendering="crispEdges"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="#8b5cf6"/></svg>
       </div>
-
-      <div class="h-card h-recent" id="recentBlock">
-        <h2>Recently created</h2>
-        <div id="recentRow" class="gallery-grid small"></div>
-        <p id="recentEmpty" class="hint">Nothing yet. Your saved strips show up here.</p>
+    </div>
+    <div class="home-dock">
+      <div class="dock-group">
+        <span class="dock-label">Pick a style</span>
+        <div id="homeStyles" class="layouts mini-thumbs"></div>
       </div>
-
-      <div class="h-card h-styles">
-        <h2>Pick a style</h2>
-        <div id="homeStyles" class="layouts big-thumbs"></div>
+      <div class="dock-group dock-recent" id="recentBlock" hidden>
+        <span class="dock-label">Recently created</span>
+        <div id="recentRow" class="dock-thumbs"></div>
       </div>
     </div>
   </section>

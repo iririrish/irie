@@ -71,7 +71,7 @@ To change the passcode: open the site, open the browser console (F12), type `iri
 
 ## Settings and themes
 
-Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. **Candy Bento** and **Pixel Pastel Town** are ready so far. The other four are shown as "Coming soon" and are built in Phases 8 and 9.
+Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. **Classic Glass** (the default) and **Pixel Pastel Town** are ready so far. The other four are shown as "Coming soon" and are built in Phases 8 and 9.
 
 ## Shared gallery (optional)
 
@@ -142,7 +142,7 @@ frames/           your photobooth frame designs (PNG) + frames.json
 fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
 lock.js           the passcode page
 theme.js          the theme list and the Settings panel
-themes/           one stylesheet per theme (candy.css, pixel.css) and theme images (see themes/README.md)
+themes/           one stylesheet per extra theme (pixel.css) and theme images (see themes/README.md). The default look lives in style.css
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
 ```
@@ -180,10 +180,10 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 Phases 1 to 7 are done (see above). The next phases are the **kawaii redesign with switchable themes**. Phases 8 to 10 are planned, not built yet.
 
 ### The six themes (design concepts)
-Ready now: Candy Bento and Pixel Pastel Town.
+Ready now: Classic Glass and Pixel Pastel Town. (Candy Bento was tried and removed.)
 Picked from the concept boards. The visitor chooses one in **Settings**, and irie remembers it on that device.
 
-1. **Candy Bento** (default): soft pink and lilac cards, puffy buttons, Fredoka and Nunito fonts.
+1. **Classic Glass** (default): the original pink and purple glass look.
 2. **Pixel Pastel Town**: pixel city background, chunky pixel buttons, pixel font, taskbar-style menu.
 3. **Night Garden**: night garden background, glass cards, drifting firefly lights.
 4. **Y2K Desktop**: sparkle-grid background, desktop windows, glossy bubble buttons, taskbar clock.
@@ -195,12 +195,12 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 ### Phase 6: Passcode page and theme setting (done)
 - The passcode becomes its **own full-screen page**, the first thing anyone sees. The rest of the site stays hidden until the right passcode is entered.
 - The lock page uses the big **"Enter the password" keypad** (from your pink pixel reference): number buttons, dots for typed digits, shake on a wrong code. On phones it uses the number keypad. "Remember me on this device" and the lock button stay.
-- The small keypad card in the Candy Bento home concept is removed, because the lock is now a separate page.
+- The small keypad card from the concepts is not used, because the lock is now a separate page.
 - A **Settings** panel with a **Theme** picker (a preview card for each theme). The choice is saved on the device and is also used for the lock page.
 - The current look is reorganized into theme files so every theme shares the same features.
 
 ### Phase 7: Themes 1 and 2 (done: home page, passcode page and Settings; the other pages get their final look in Phase 10)
-- Build **Candy Bento** and **Pixel Pastel Town** for the home page and lock page.
+- Build the default look and **Pixel Pastel Town** for the home page and lock page.
 - Your background images go in a `themes/` folder on GitHub (resized so pages load fast).
 
 ### Phase 8: Themes 3 and 4
@@ -218,6 +218,13 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.8.1 – 2026-11-20
+- The original pink and purple glass look is back and is the default theme, now called **Classic Glass**. Candy Bento is removed.
+- The home page now fits on **one screen with no scrolling**: headline, buttons and strip previews on top, and a slim bar at the bottom with **Pick a style** (small thumbnails) and **Recently created** (up to 3). The camera screen is a little shorter too.
+- **Thin scrollbars** in every theme (square pixel-style ones in Pixel Pastel Town).
+- **Pixel Pastel Town** rebuilt to match the concept board: a pixel panel with the "irie.exe" tagline, tilted pixel strip and polaroid frames, twinkling hearts, a pixel-style "Pick a style" bar, the taskbar menu along the bottom, and the pixel-city passcode page.
+- Removed `themes/candy.css`.
 
 ### v0.8.0 – 2026-11-20
 - Phase 7: **Candy Bento** home page is now a bento layout (hero card, steps card, recently created card, pick a style card), with puffy Fredoka and Nunito styling. The small keypad card is gone, since the passcode is its own page.
