@@ -1019,9 +1019,15 @@
   };
   /* ---------- shared gallery (optional, Supabase) ---------- */
   const CFG = window.IRIE_CONFIG || {};
+  if (CFG.supabaseUrl) CFG.supabaseUrl = String(CFG.supabaseUrl).trim().replace(/\/+$/, '');
   const Cloud = {
     on: !!(CFG.supabaseUrl && CFG.supabaseKey),
-    h(extra) { return { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey, ...(extra || {}) }; },
+    // (the URL is cleaned of spaces and a trailing slash below)
+    h(extra) {
+      const k = String(CFG.supabaseKey).trim(), base = { apikey: k };
+      if (k.startsWith('eyJ')) base.Authorization = 'Bearer ' + k;   // older-style keys are sent this way; newer sb_publishable_ keys use apikey only
+      return { ...base, ...(extra || {}) };
+    },
     pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
     async upload(path, blob) {
       const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });

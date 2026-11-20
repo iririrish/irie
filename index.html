@@ -7,21 +7,27 @@
   <meta name="description" content="irie is a simple online photobooth. Take photos, pick a layout, download your strip.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Pacifico&family=Permanent+Marker&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Fredoka:wght@500;600;700&family=Pacifico&family=Permanent+Marker&display=swap">
   <link rel="stylesheet" href="style.css">
   <script src="lock.js"></script>
 </head>
 <body>
 
 <div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
-  <div class="lock-card glass">
-    <div class="lock-logo">irie</div>
-    <h2 id="lockTitle">enter the passcode</h2>
-    <p class="sub">saving memories</p>
-    <input id="lockInput" class="lock-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="4-digit passcode" placeholder="••••">
+  <svg class="lk-cloud c1" viewBox="0 0 26 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 6h2V4h2V2h4V0h4v2h2v2h4v2h2v6H2V6z" fill="currentColor"/></svg><svg class="lk-cloud c2" viewBox="0 0 26 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 6h2V4h2V2h4V0h4v2h2v2h4v2h2v6H2V6z" fill="currentColor"/></svg><svg class="lk-cloud c3" viewBox="0 0 26 12" shape-rendering="crispEdges" aria-hidden="true"><path d="M6 6h2V4h2V2h4V0h4v2h2v2h4v2h2v6H2V6z" fill="currentColor"/></svg><svg class="lk-heart h1" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="currentColor"/></svg><svg class="lk-heart h2" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="currentColor"/></svg><svg class="lk-heart h3" viewBox="0 0 7 6" shape-rendering="crispEdges" aria-hidden="true"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="currentColor"/></svg>
+  <div class="lock-card">
+    <svg class="lk-lock" viewBox="0 0 24 24" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="4" y="10" width="16" height="11" rx="3" fill="currentColor"/></svg>
+    <h2 id="lockTitle">Enter the password</h2>
+    <div class="lk-dots" aria-hidden="true"><span class="lk-dot"></span><span class="lk-dot"></span><span class="lk-dot"></span><span class="lk-dot"></span></div>
+    <p id="lockStatus" class="sr" role="status"></p>
+    <div class="lk-pad">
+      <button class="lk-key" data-k="1" aria-label="1">1</button><button class="lk-key" data-k="2" aria-label="2">2</button><button class="lk-key" data-k="3" aria-label="3">3</button><button class="lk-key" data-k="4" aria-label="4">4</button><button class="lk-key" data-k="5" aria-label="5">5</button><button class="lk-key" data-k="6" aria-label="6">6</button><button class="lk-key" data-k="7" aria-label="7">7</button><button class="lk-key" data-k="8" aria-label="8">8</button><button class="lk-key" data-k="9" aria-label="9">9</button>
+      <span></span>
+      <button class="lk-key" data-k="0" aria-label="0">0</button>
+      <button id="lockBack" class="lk-key lk-back" aria-label="Delete last digit"><svg viewBox="0 0 24 24" width="26" height="26" aria-hidden="true"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/><path d="m12 9 5 6m0-6-5 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
     <label class="check"><input type="checkbox" id="lockRemember"> Remember me on this device</label>
     <p id="lockMsg" class="lock-msg" role="alert"></p>
-    <button id="lockGo" class="btn primary big">Unlock</button>
   </div>
 </div>
 
@@ -32,7 +38,8 @@
     <button data-go="booth">Photobooth</button>
     <button data-go="gallery">Gallery</button>
   </nav>
-  <button id="relock" class="icon-btn" aria-label="Lock irie" title="Lock">🔒</button>
+  <button id="settingsBtn" class="icon-btn" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M19.4 13a7.5 7.5 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7.5 7.5 0 0 0-1.7-1L15 3.5h-4l-.4 2.6a7.5 7.5 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.5 7.5 0 0 0 0 2l-2 1.5 2 3.4 2.3-1a7.5 7.5 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.5 7.5 0 0 0 1.7-1l2.3 1 2-3.4z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg></button>
+  <button id="relock" class="icon-btn" aria-label="Lock irie" title="Lock"><svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M7 10V7a5 5 0 0 1 10 0v3" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/><rect x="4" y="10" width="16" height="11" rx="3" fill="currentColor"/></svg></button>
   <button id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme">◐</button>
 </header>
 
@@ -322,9 +329,24 @@
 
 </main>
 
+<div id="settings" class="modal" role="dialog" aria-modal="true" aria-labelledby="setTitle" hidden>
+  <div class="modal-card glass">
+    <div class="modal-head">
+      <h2 id="setTitle">Settings</h2>
+      <button id="setClose" class="icon-btn" aria-label="Close settings"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path d="m5 5 14 14M19 5 5 19" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg></button>
+    </div>
+    <h3>Theme</h3>
+    <p class="hint" style="margin:0">Pick how irie looks. Your choice is saved on this device.</p>
+    <div id="skinList" class="skin-list"></div>
+    <h3>Mode</h3>
+    <div class="seg" id="modeSeg"><button data-mode="light">Light</button><button data-mode="dark">Dark</button></div>
+  </div>
+</div>
+
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 <div id="toast" class="toast" role="status"></div>
 
+<script src="theme.js"></script>
 <script src="config.js"></script>
 <script src="fx.js"></script>
 <script src="app.js"></script>

@@ -248,16 +248,48 @@ details summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 .fav.on{color:var(--pink)}
 .fav:hover{transform:scale(1.15)}
 
-/* ---- passcode lock ---- */
+/* ---- passcode page ---- */
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
 .lock{display:none}
-.locked .lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px}
-.locked .nav,.locked main,.locked .toast{display:none}
-.lock-card{width:min(360px,100%);border-radius:var(--r);padding:28px 24px;display:grid;gap:12px;justify-items:center;text-align:center}
-.lock-logo{font:800 3rem/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.03em;background:linear-gradient(90deg,var(--pink),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
-.lock-card h2{margin:0;font-size:1.4rem}
-.lock-card .sub{margin:0 0 6px}
-.lock-input{width:9.5ch;padding:12px 0;text-align:center;font:700 2rem/1 "DM Sans",sans-serif;letter-spacing:.35em;text-indent:.35em;border-radius:16px;border:2px solid var(--glass-line);background:var(--field)}
-.lock-input:focus{border-color:var(--violet);outline:none;box-shadow:0 0 0 4px rgba(124,77,255,.2)}
-.lock-msg{min-height:1.4em;margin:0;color:var(--pink);font-weight:700;font-size:.9rem}
+.locked .lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;overflow:auto;padding:24px;
+  background:linear-gradient(180deg,#ffd6ea 0%,#f9b8d8 55%,#ffd0e5 100%);color:#7a2257}
+[data-theme="dark"] .locked .lock{background:linear-gradient(180deg,#3b2052 0%,#2a1740 100%);color:#ffd6ea}
+.locked .nav,.locked main,.locked .toast,.locked .modal{display:none}
+.lock-card{position:relative;z-index:2;width:min(330px,100%);display:grid;justify-items:center;gap:14px;text-align:center}
+.lock-card h2{margin:0;font:600 1.8rem/1.1 "Fredoka","DM Sans",sans-serif;color:inherit}
+.lk-lock{width:44px;height:44px;color:#ec5f9e}
+.lk-dots{display:flex;gap:16px;height:24px;align-items:center}
+.lk-dot{width:16px;height:16px;border-radius:50%;border:3px solid #ec5f9e;background:transparent;transition:background .12s}
+.lk-dot.on{background:#ec5f9e}
+.lk-pad{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;width:100%}
+.lk-key{height:64px;display:grid;place-items:center;font:600 1.7rem "Fredoka","DM Sans",sans-serif;color:#fff;border:3px solid #fff;border-radius:16px;
+  background:linear-gradient(#ff8fc4,#e0488f);box-shadow:0 5px 0 #b82f77,0 10px 16px rgba(184,47,119,.25);cursor:pointer;
+  transition:transform .14s cubic-bezier(.34,1.56,.64,1),box-shadow .14s}
+.lk-key:hover{transform:translateY(-2px)}
+.lk-key:active{transform:translateY(4px);box-shadow:0 1px 0 #b82f77}
+.lk-key:focus-visible{outline:3px solid #7c4dff;outline-offset:3px}
+.lock .check{color:inherit}
+.lock-msg{min-height:1.4em;margin:0;font-weight:700;font-size:.9rem;color:#b3155e}
+[data-theme="dark"] .lock-msg{color:#ffb3d6}
 .lock-card.shake{animation:shake .4s}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+.lk-cloud{position:absolute;color:rgba(255,255,255,.7);z-index:1}
+.lk-cloud.c1{width:180px;left:6%;top:12%}.lk-cloud.c2{width:130px;right:8%;top:22%}.lk-cloud.c3{width:210px;left:18%;bottom:8%}
+.lk-heart{position:absolute;color:#ee6aa7;z-index:1}
+.lk-heart.h1{width:70px;left:48%;top:0}.lk-heart.h2{width:34px;left:3%;bottom:2%}.lk-heart.h3{width:34px;right:4%;bottom:2%}
+[data-theme="dark"] .lk-cloud{color:rgba(255,255,255,.12)}
+@media (prefers-reduced-motion:reduce){.lk-key,.lk-dot{transition:none}}
+
+/* ---- settings and themes ---- */
+.modal{position:fixed;inset:0;z-index:60;display:grid;place-items:center;padding:20px;background:rgba(30,10,50,.45);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.modal-card{width:min(600px,100%);max-height:90vh;overflow:auto;border-radius:var(--r);padding:22px;display:grid;gap:12px;background:var(--bg1)}
+.modal-head{display:flex;justify-content:space-between;align-items:center}
+.modal-head h2,.modal-card h3{margin:0}
+.skin-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px}
+.skin{display:grid;gap:6px;text-align:left;padding:8px;border-radius:16px;border:2px solid transparent;background:var(--field);color:var(--ink)}
+.skin .sw{display:block;height:72px;border-radius:10px}
+.skin strong{font-size:.92rem}
+.skin .tag{font-size:.75rem;color:var(--muted)}
+.skin.on{border-color:var(--violet);box-shadow:0 0 0 3px rgba(124,77,255,.2)}
+.skin[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
+#settingsBtn svg,#relock svg{display:block}

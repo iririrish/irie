@@ -63,11 +63,15 @@ The gallery uses your browser's built-in storage (IndexedDB), so everything stay
 
 ## Passcode
 
-irie asks for a 4-digit passcode before you can use it. There is no sign-in. Tick "Remember me on this device" to skip it next time, or press the lock button in the top bar to lock again.
+The very first thing anyone sees is a full-screen **"Enter the password"** page with a number keypad. The rest of the site stays hidden until the right 4-digit code is entered. There is no sign-in. You can tap the keypad or type the digits on a keyboard. Tick "Remember me on this device" to skip it next time, or press the lock button in the top bar to lock again.
 
 **Please note:** this is a casual lock to keep strangers out of a personal site. It runs in the browser, so anyone who is good with developer tools could get past it. It does not protect the shared gallery's storage (see below). Don't put anything private on it.
 
 To change the passcode: open the site, open the browser console (F12), type `irieHash('1234')` with your new number, and paste the result into `PASS_HASH` in `lock.js`.
+
+## Settings and themes
+
+Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. Only **Candy Bento** is ready so far. The other five themes are shown as "Coming soon" and are built in Phases 7 to 9.
 
 ## Shared gallery (optional)
 
@@ -136,6 +140,9 @@ style.css         look and feel
 app.js            all the logic
 frames/           your photobooth frame designs (PNG) + frames.json
 fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
+lock.js           the passcode page
+theme.js          the theme list and the Settings panel
+themes/           theme files and images (see themes/README.md)
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
 ```
@@ -170,9 +177,55 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 
 ## Roadmap
 
-All five planned phases are done. Ideas for later: custom frame images that switch with each theme, more themes, portrait-shaped single photo, and an easy backup export of the whole gallery.
+Phases 1 to 6 are done (see above). The next phases are the **kawaii redesign with switchable themes**. Phases 7 to 10 are planned, not built yet.
+
+### The six themes (design concepts)
+Picked from the concept boards. The visitor chooses one in **Settings**, and irie remembers it on that device.
+
+1. **Candy Bento** (default): soft pink and lilac cards, puffy buttons, Fredoka and Nunito fonts.
+2. **Pixel Pastel Town**: pixel city background, chunky pixel buttons, pixel font, taskbar-style menu.
+3. **Night Garden**: night garden background, glass cards, drifting firefly lights.
+4. **Y2K Desktop**: sparkle-grid background, desktop windows, glossy bubble buttons, taskbar clock.
+5. **Sticker Book**: notebook page, paper tabs, taped photos, handwritten titles.
+6. **Halftone Pop Zine**: halftone pink background, bold collage, menu rail down the left side.
+
+All six keep the same content and features. Only the look, fonts, backgrounds, menu style and small animations change.
+
+### Phase 6: Passcode page and theme setting (done)
+- The passcode becomes its **own full-screen page**, the first thing anyone sees. The rest of the site stays hidden until the right passcode is entered.
+- The lock page uses the big **"Enter the password" keypad** (from your pink pixel reference): number buttons, dots for typed digits, shake on a wrong code. On phones it uses the number keypad. "Remember me on this device" and the lock button stay.
+- The small keypad card in the Candy Bento home concept is removed, because the lock is now a separate page.
+- A **Settings** panel with a **Theme** picker (a preview card for each theme). The choice is saved on the device and is also used for the lock page.
+- The current look is reorganized into theme files so every theme shares the same features.
+
+### Phase 7: Themes 1 and 2
+- Build **Candy Bento** and **Pixel Pastel Town** for the home page and lock page.
+- Your background images go in a `themes/` folder on GitHub (resized so pages load fast).
+
+### Phase 8: Themes 3 and 4
+- Build **Night Garden** and **Y2K Desktop**.
+
+### Phase 9: Themes 5 and 6
+- Build **Sticker Book** and **Halftone Pop Zine**.
+
+### Phase 10: Every page, every theme, polish
+- Apply all six themes to the camera, review, editor and gallery pages, not just the home page.
+- Phone layouts, keyboard use, contrast checks, and reduced-motion support for the animations.
+- Faster loading (smaller background images), then a full test of the whole site.
+
+### Ideas for later
+Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.7.0 – 2026-11-20
+- Phase 6: the passcode is now its own full-screen page with a number keypad ("Enter the password"), pixel hearts and clouds, dots for typed digits, a delete key, and keyboard typing.
+- New **Settings** panel (gear button): theme picker with a card for each of the six themes, and a Light / Dark switch. The choice is saved per device and the passcode page follows it.
+- Candy Bento is the current look. The other five themes show "Coming soon".
+- New files: `theme.js`, `themes/README.md`. The lock button and settings button now use drawn icons.
+
+### v0.6.2 – 2026-11-20
+- Roadmap updated with phases 6 to 10: separate passcode page, theme setting with six themes, and applying the themes to every page. No code changes.
 
 ### v0.6.1 – 2026-11-19
 - Shared gallery setup guide in the README is now step by step, with troubleshooting.
