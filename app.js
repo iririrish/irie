@@ -1189,7 +1189,7 @@
   }
   async function renderRecent() {
     const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
-    $('#recentBlock').hidden = !list.length;
+    $('#recentEmpty').hidden = list.length > 0;
     list.forEach(r => row.append(recCard(r, true)));
   }
 

@@ -2,13 +2,15 @@
    Each theme is a look for the whole site. Only themes marked ready can be chosen; the rest show "Coming soon". */
 (() => {
   const SKINS = [
-    { id: 'candy', name: 'Candy Bento', ready: true, note: 'Soft pink and lilac, puffy buttons', sw: 'linear-gradient(135deg,#ffc2e0,#d9c9ff)' },
-    { id: 'pixel', name: 'Pixel Pastel Town', ready: false, note: 'Pixel city, chunky pixel buttons', sw: 'linear-gradient(135deg,#aee0ff,#ffb3da)' },
-    { id: 'night', name: 'Night Garden', ready: false, note: 'Night garden, glass cards, fireflies', sw: 'linear-gradient(135deg,#1b2159,#ffd77a)' },
-    { id: 'y2k', name: 'Y2K Desktop', ready: false, note: 'Sparkle grid, windows, bubble buttons', sw: 'linear-gradient(135deg,#cdb8ff,#ff9ad5)' },
-    { id: 'sticker', name: 'Sticker Book', ready: false, note: 'Notebook page, tabs, taped photos', sw: 'linear-gradient(135deg,#fff8ec,#ffc2e0)' },
-    { id: 'zine', name: 'Halftone Pop Zine', ready: false, note: 'Bold collage, halftone dots', sw: 'linear-gradient(135deg,#ff6fb7,#8b5cf6)' }
+    { id: 'candy', name: 'Candy Bento', note: 'Soft pink and lilac, puffy buttons', sw: 'linear-gradient(135deg,#ffc2e0,#d9c9ff)' },
+    { id: 'pixel', name: 'Pixel Pastel Town', note: 'Pixel city, chunky pixel buttons', sw: 'url(themes/images/pixel-city.jpg) center/cover' },
+    { id: 'night', name: 'Night Garden', note: 'Night garden, glass cards, fireflies', sw: 'linear-gradient(135deg,#1b2159,#ffd77a)' },
+    { id: 'y2k', name: 'Y2K Desktop', note: 'Sparkle grid, windows, bubble buttons', sw: 'linear-gradient(135deg,#cdb8ff,#ff9ad5)' },
+    { id: 'sticker', name: 'Sticker Book', note: 'Notebook page, tabs, taped photos', sw: 'linear-gradient(135deg,#fff8ec,#ffc2e0)' },
+    { id: 'zine', name: 'Halftone Pop Zine', note: 'Bold collage, halftone dots', sw: 'linear-gradient(135deg,#ff6fb7,#8b5cf6)' }
   ];
+  const READY = window.IRIE_SKINS_READY || ['candy'];
+  SKINS.forEach(s => { s.ready = READY.includes(s.id); });
   const root = document.documentElement, $ = s => document.querySelector(s);
   const get = k => { try { return JSON.parse(localStorage.getItem('irie.' + k)); } catch { return null; } };
   const set = (k, v) => { try { localStorage.setItem('irie.' + k, JSON.stringify(v)); } catch { /* ignore */ } };

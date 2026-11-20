@@ -17,7 +17,11 @@
   const unlocked = () => read(sessionStorage) === PASS_HASH || read(localStorage) === PASS_HASH;
 
   // use the saved theme right away, so the passcode page already looks right
-  root.dataset.skin = saved('skin') || 'candy';
+  const READY = ['candy', 'pixel'];   // themes that are built (the others show "Coming soon" in Settings)
+  window.IRIE_SKINS_READY = READY;
+  const skin = READY.includes(saved('skin')) ? saved('skin') : 'candy';
+  root.dataset.skin = skin;
+  if (skin !== 'candy') document.write('<link rel="stylesheet" id="skin-css-' + skin + '" href="themes/' + skin + '.css">');
   const mode = saved('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
   root.dataset.theme = mode;
   if (!unlocked()) root.classList.add('locked');
