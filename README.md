@@ -73,35 +73,47 @@ To change the passcode: open the site, open the browser console (F12), type `iri
 
 By default each person's saved pictures live only on their own device. To let everyone who has the passcode see the same gallery, irie can use a free [Supabase](https://supabase.com) project as shared storage. No sign-in is needed for visitors.
 
-1. Create a free Supabase account and a new project.
-2. In the project, open **SQL Editor**, paste this and press Run:
+### Step 1. Create your Supabase project
+1. Go to **supabase.com** and press **Start your project**. Sign up with GitHub or an email.
+2. Press **New project** (if it asks for an organization, create one with any name and choose the **Free** plan).
+3. Fill in: **Name** `irie`, **Database password** (press Generate and save it somewhere; irie never uses it), **Region** the closest one to you (for the Philippines, choose Southeast Asia / Singapore).
+4. Press **Create new project** and wait about 2 minutes until the dashboard finishes setting up.
 
-```sql
-create table creations (
-  id text primary key,
-  created bigint not null,
-  name text not null,
-  layout_id text, layout_name text, theme_id text, theme_name text,
-  favorite boolean default false,
-  final_path text not null, thumb_path text not null,
-  originals jsonb default '[]', project jsonb
-);
-alter table creations enable row level security;
-create policy "read" on creations for select using (true);
-create policy "add" on creations for insert with check (true);
-create policy "change" on creations for update using (true) with check (true);
-create policy "remove" on creations for delete using (true);
+### Step 2. Create the storage
+1. In the left menu, open **SQL Editor** (the `</>` icon), then **New query**.
+2. Copy the whole SQL block above, paste it in, and press **Run**. You should see "Success. No rows returned."
+3. Check it worked: **Table Editor** should list a table called `creations`, and **Storage** should list a bucket called `irie` marked Public.
+4. If you see "already exists", you ran it twice. That is fine.
 
-insert into storage.buckets (id, name, public) values ('irie', 'irie', true);
-create policy "read files" on storage.objects for select using (bucket_id = 'irie');
-create policy "add files" on storage.objects for insert with check (bucket_id = 'irie');
-create policy "remove files" on storage.objects for delete using (bucket_id = 'irie');
+### Step 3. Copy your two values
+1. Open **Project Settings** (gear icon, bottom left), then **API Keys** (it may be called **API**).
+2. Copy the **Project URL**. It looks like `https://abcdefgh.supabase.co`.
+3. Copy the public key. Either one works: the **anon** key (starts with `eyJ`, sometimes under "Legacy API keys") or the **publishable** key (starts with `sb_publishable_`). Never copy the `service_role` or `secret` key.
+
+### Step 4. Put them in irie
+1. On GitHub, open your irie repository and click `config.js`, then the pencil icon (Edit).
+2. Paste each value between the quotes, with no spaces:
+
+```js
+window.IRIE_CONFIG = {
+  supabaseUrl: 'https://abcdefgh.supabase.co',
+  supabaseKey: 'eyJ...your key...'
+};
 ```
 
-3. Open **Project Settings → API**. Copy the **Project URL** and the **anon public** key.
-4. Paste them into `config.js` and upload it to GitHub.
+3. Press **Commit changes**. GitHub Pages updates in about a minute. Then open irie and refresh the page with Ctrl+F5 (on a phone, close the tab and open it again).
 
-When both values are filled in, "Save to gallery" saves to the shared gallery and the Gallery page shows everyone's pictures. Leave them empty to keep pictures on each device.
+### Step 5. Test it
+1. Open irie, enter the passcode, take a picture, go to the editor and press **Save to gallery**. You should see "Saved to the shared gallery".
+2. Open the **Gallery** page. Your picture is there, and the note under the title says "Shared gallery".
+3. Open irie on another phone or browser, enter the passcode, and open the Gallery. You should see the same picture.
+4. In Supabase, **Table Editor → creations** shows a new row, and **Storage → irie** shows a folder with the image files.
+
+### If something goes wrong
+- **"Could not reach the shared gallery":** check `config.js` for a typo, a missing quote, or an extra space. Then press F12, open the **Network** tab, save again, and look at the red line. `401` or `403` means the key is wrong or Step 2 was skipped. `404` means the `creations` table is missing. A message about "row-level security" means the policies in Step 2 did not run.
+- **The page still says "Saved on this device only":** `config.js` is still empty or the browser kept the old version. Refresh with Ctrl+F5.
+- **The project stopped working after a quiet week:** free Supabase projects pause when nobody uses them. Open the dashboard and press **Restore project**.
+- **Space:** the free plan gives 1 GB of file storage. Each saved picture uses roughly 1 to 4 MB, so it holds hundreds.
 
 **What "public" means here:** the gallery is open to anyone who has the site address and the key in `config.js`, because there is no sign-in. The passcode is only a front door. Anyone can also delete pictures, and "Delete all" removes them for everybody, so use it carefully. Favorites, names and delete work for the whole group.
 
@@ -161,6 +173,10 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 All five planned phases are done. Ideas for later: custom frame images that switch with each theme, more themes, portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.6.1 – 2026-11-19
+- Shared gallery setup guide in the README is now step by step, with troubleshooting.
+- Shared gallery now also works with Supabase's newer `sb_publishable_` keys, and ignores spaces or a trailing slash in the URL.
 
 ### v0.6.0 – 2026-11-19
 - **Passcode screen** (4 digits) before entering irie, with a "Remember me on this device" option and a lock button. No sign-in. New file `lock.js`.
