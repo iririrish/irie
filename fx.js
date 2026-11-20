@@ -5,7 +5,8 @@
   const CATS = [
     { id: 'color', name: 'Color' },
     { id: 'warp', name: 'Distortion' },
-    { id: 'art', name: 'Artistic' }
+    { id: 'art', name: 'Artistic' },
+    { id: 'multi', name: 'Multi' }
   ];
 
   /* Each effect is the body of `vec3 effect(vec2 uv)`. `mix:true` fades it with the strength slider;
@@ -53,9 +54,27 @@
     { id: 'posterize', name: 'Posterize', cat: 'art', mix: false, body: 'float lv=mix(16.,3.,u_k);return floor(src(uv)*lv+.5)/lv;' },
     { id: 'glitch', name: 'Glitch', cat: 'art', mix: false, body: 'float t=floor(u_time*8.);float band=floor(uv.y*22.);float n=hash(vec2(band,t));float off=0.;if(n>.82){off=(n-.9)*.35*u_k;}float sp=.012*u_k;vec2 q=uv+vec2(off,0.);return vec3(src(q+vec2(sp,0.)).r,src(q).g,src(q-vec2(sp,0.)).b);' },
     { id: 'kaleido', name: 'Kaleidoscope', cat: 'art', mix: false, body: 'vec2 A=asp();vec2 p=(uv-.5)*A;float n=floor(3.+u_k*7.+.5);float seg=6.2831853/n;float a=mod(atan(p.y,p.x),seg);if(a>seg*.5){a=seg-a;}float r=length(p)*.85;p=vec2(cos(a+.4),sin(a+.4))*r;return src(p/A+.5);' },
-    { id: 'mirror', name: 'Mirror', cat: 'art', mix: false, body: 'vec2 q=uv;if(uv.x>.5){q.x=1.-uv.x;}return mix(src(uv),src(q),u_k);' },
+    { id: 'mirror', name: 'Horizontal Mirror', cat: 'multi', mix: false, body: 'vec2 q=uv;if(uv.x>.5){q.x=1.-uv.x;}return mix(src(uv),src(q),u_k);' },
     { id: 'double', name: 'Double Vision', cat: 'art', mix: false, body: 'vec2 o=vec2(.035,.012)*u_k;return mix(src(uv-o),src(uv+o),.5);' },
     { id: 'hatch', name: 'Crosshatch', cat: 'art', mix: true, body: 'float l=luma(src(uv));float s=u_res.y/110.;float x=gl_FragCoord.x;float y=gl_FragCoord.y;float h=1.;if(l<.8&&mod(x+y,s)<s*.2){h=0.;}if(l<.6&&mod(x-y+s*4.,s)<s*.2){h=0.;}if(l<.4&&mod(x+y+s*.5,s)<s*.2){h=0.;}if(l<.25&&mod(x-y+s*4.5,s)<s*.2){h=0.;}return vec3(.97,.95,.9)*(.12+.88*h);' }
+,
+
+    // ----- more artistic -----
+    { id: 'halftone', name: 'Halftone', cat: 'art', mix: true, body: 'vec2 A=asp();vec2 n=vec2(70.*A.x,70.);vec2 g=uv*n;vec2 f=fract(g)-.5;vec3 c=src((floor(g)+.5)/n);float l=clamp(luma(c),0.,1.);float m=step(length(f),sqrt(1.-l)*.72);return mix(vec3(.97,.95,.92),c*.85,m);' },
+    { id: 'popart', name: 'Pop Art', cat: 'art', mix: true, body: 'float l=luma(src(uv));float lv=min(floor(l*4.),3.)/3.;vec3 a=vec3(.1,.05,.35);vec3 b=vec3(.9,.1,.5);vec3 c=vec3(1.,.85,.1);vec3 d=vec3(.4,.95,.95);return mix(mix(mix(a,b,step(.2,lv)),c,step(.5,lv)),d,step(.8,lv));' },
+    { id: 'watercolor', name: 'Watercolor', cat: 'art', mix: true, body: 'vec3 g=vec3(0.);vec2 bp=vec2(.004,.004*u_res.x/u_res.y);for(int i=-2;i<=2;i++){for(int j=-2;j<=2;j++){g+=src(uv+vec2(float(i),float(j))*bp);}}g/=25.;vec3 q=floor(satc(g,1.2)*6.+.5)/6.;vec3 c=mix(q,g,.45);c*=1.-smoothstep(.35,.9,edge(uv))*.35;float n=hash(floor(uv*vec2(300.,225.)))-.5;return c*.96+vec3(.04)+vec3(n*.05);' },
+
+    // ----- multi-camera & mirror -----
+    { id: 'vmirror', name: 'Vertical Mirror', cat: 'multi', mix: false, body: 'vec2 q=uv;if(uv.y>.5){q.y=1.-uv.y;}return mix(src(uv),src(q),u_k);' },
+    { id: 'qmirror', name: 'Four-Way Mirror', cat: 'multi', mix: false, body: 'vec2 q=uv;if(uv.x>.5){q.x=1.-uv.x;}if(uv.y>.5){q.y=1.-uv.y;}return mix(src(uv),src(q),u_k);' },
+    { id: 'sym', name: 'Symmetry', cat: 'multi', mix: false, body: 'vec2 q=uv;if(uv.x<.5){q.x=1.-uv.x;}return mix(src(uv),src(q),u_k);' },
+    { id: 'quad', name: 'Quad Cam', cat: 'multi', mix: true, body: 'return src(fract(uv*2.));' },
+    { id: 'mirrorquad', name: 'Mirror Quad', cat: 'multi', mix: true, body: 'vec2 t=uv*2.;vec2 f=fract(t);vec2 i=floor(t);if(mod(i.x,2.)>.5){f.x=1.-f.x;}if(mod(i.y,2.)>.5){f.y=1.-f.y;}return src(f);' },
+    { id: 'lomoquad', name: 'Lomo Quad', cat: 'multi', mix: true, body: 'vec2 t=uv*2.;vec2 f=fract(t);vec2 i=floor(t);vec3 c=conc(satc(src(f),1.3),1.25);float id=i.x+i.y*2.;vec3 tint=vec3(1.1,.95,.85);if(id>.5&&id<1.5){tint=vec3(.85,1.05,1.1);}else if(id>1.5&&id<2.5){tint=vec3(1.1,1.05,.8);}else if(id>2.5){tint=vec3(1.05,.85,1.1);}vec2 q=f-.5;return c*tint*(1.-dot(q,q)*1.2);' },
+    { id: 'popbooth', name: 'Pop Booth', cat: 'multi', mix: true, body: 'vec2 t=uv*2.;vec2 f=fract(t);vec2 i=floor(t);float l=luma(src(f));float lv=min(floor(l*4.),3.)/3.;vec3 a=vec3(.1,.05,.35);vec3 b=vec3(.9,.1,.5);vec3 c=vec3(1.,.85,.1);vec3 d=vec3(.4,.95,.95);vec3 col=mix(mix(mix(a,b,step(.2,lv)),c,step(.5,lv)),d,step(.8,lv));float id=i.x+i.y*2.;if(id>.5&&id<1.5){col=col.gbr;}else if(id>1.5&&id<2.5){col=col.brg;}else if(id>2.5){col=col.bgr;}return col;' },
+    { id: 'spy', name: 'Spy Cam', cat: 'multi', mix: true, body: 'float l=luma(src(uv));float scan=.88+.12*sin(uv.y*220.);float n=(hash(floor(uv*vec2(320.,240.))+fract(u_time))-.5)*.14;vec3 r=vec3(l*.45,l*1.05,l*.55)*scan+vec3(n);vec2 v=uv-.5;r*=1.-dot(v,v)*1.1;vec2 q=(uv-vec2(.07,.1))*asp();if(length(q)<.02&&sin(u_time*6.)>0.){r=vec3(1.,.1,.1);}return r;' },
+    { id: 'split', name: 'Split Screen', cat: 'multi', mix: true, body: 'vec3 c=src(uv);vec3 a=c*vec3(1.08,1.02,.9);vec3 b=satc(conc(c,1.15),1.3)*vec3(.9,1.,1.1);float m=smoothstep(.495,.505,uv.x);float d=1.-smoothstep(.0,.004,abs(uv.x-.5));return mix(mix(a,b,m),vec3(1.),d);' },
+    { id: 'repeat', name: 'Repeating', cat: 'multi', mix: true, body: 'return src(fract(uv*3.));' }
   ];
 
   const ADJ = [
@@ -78,6 +97,7 @@ varying vec2 v_uv;
 uniform sampler2D u_tex;
 uniform vec2 u_res;
 uniform vec2 u_crop;
+uniform vec2 u_off;
 uniform float u_mirror;
 uniform float u_k;
 uniform float u_time;
@@ -91,7 +111,7 @@ float hash(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
 vec2 rot(vec2 p,float a){float c=cos(a);float s=sin(a);return vec2(p.x*c-p.y*s,p.x*s+p.y*c);}
 vec2 asp(){return vec2(u_res.x/u_res.y,1.);}
 vec2 pxs(){return vec2(max(1.,u_res.y/360.))/u_res;}
-vec2 srcUV(vec2 uv){uv=(clamp(uv,0.,1.)-.5)*u_crop+.5;if(u_mirror>.5){uv.x=1.-uv.x;}return uv;}
+vec2 srcUV(vec2 uv){uv=(clamp(uv,0.,1.)-.5)*u_crop+.5+u_off;if(u_mirror>.5){uv.x=1.-uv.x;}return uv;}
 vec3 srcRaw(vec2 uv){return texture2D(u_tex,srcUV(uv)).rgb;}
 vec3 src(vec2 uv){
   vec3 c=srcRaw(uv);
@@ -159,7 +179,7 @@ void main(){
         gl.shaderSource(fs, HEAD + 'vec3 effect(vec2 uv){' + e.body + '}' + TAIL(e.mix)); gl.compileShader(fs);
         const p = gl.createProgram(); gl.attachShader(p, vs); gl.attachShader(p, fs); gl.bindAttribLocation(p, 0, 'a_pos'); gl.linkProgram(p);
         if (gl.getProgramParameter(p, gl.LINK_STATUS)) {
-          const u = {}; ['u_tex', 'u_res', 'u_crop', 'u_mirror', 'u_k', 'u_time', 'u_a1', 'u_a2', 'u_a3'].forEach(n => { u[n] = gl.getUniformLocation(p, n); });
+          const u = {}; ['u_tex', 'u_res', 'u_crop', 'u_off', 'u_mirror', 'u_k', 'u_time', 'u_a1', 'u_a2', 'u_a3'].forEach(n => { u[n] = gl.getUniformLocation(p, n); });
           out = { p, u };
         } else console.warn('irie: effect "' + id + '" failed:', gl.getShaderInfoLog(fs) || gl.getProgramInfoLog(p));
       }
@@ -176,8 +196,10 @@ void main(){
       gl.bindBuffer(gl.ARRAY_BUFFER, buf); gl.enableVertexAttribArray(0); gl.vertexAttribPointer(0, 2, gl.FLOAT, false, 0, 0);
       gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, tex);
       gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, source);
-      const sa = sw / sh, da = dw / dh, cx = sa > da ? da / sa : 1, cy = sa > da ? 1 : sa / da;
+      const z = o.zoom || 1, sa = sw / sh, da = dw / dh;
+      const cx = (sa > da ? da / sa : 1) / z, cy = (sa > da ? 1 : sa / da) / z;
       gl.uniform1i(pr.u.u_tex, 0); gl.uniform2f(pr.u.u_res, dw, dh); gl.uniform2f(pr.u.u_crop, cx, cy);
+      gl.uniform2f(pr.u.u_off, (o.ox || 0) * (1 - cx) / 2, (o.oy || 0) * (1 - cy) / 2);
       gl.uniform1f(pr.u.u_mirror, o.mirror ? 1 : 0); gl.uniform1f(pr.u.u_k, o.k == null ? 1 : o.k); gl.uniform1f(pr.u.u_time, o.time || 0);
       gl.uniform4f(pr.u.u_a1, g('brightness'), g('contrast'), g('saturation'), g('exposure'));
       gl.uniform4f(pr.u.u_a2, g('temperature'), g('tint'), g('highlights'), g('shadows'));

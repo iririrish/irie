@@ -227,3 +227,37 @@ details summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 .gcard .btn{padding:5px 11px;font-size:.8rem}
 .gallery-grid.small .gcard{width:150px;padding:8px}
 .gallery-grid.small .gcard img{max-height:170px}
+
+/* ---- Phase 4 ---- */
+.theme-list{display:flex;flex-wrap:wrap;gap:6px}
+.theme-btn{border:1px solid var(--glass-line);border-radius:12px;padding:8px 12px;font-weight:700;font-size:.82rem}
+.theme-btn:hover{transform:translateY(-1px)}
+#boothLayouts,#editLayouts{max-height:280px;overflow:auto;padding:2px}
+.tabs button{font-size:.8rem;padding:8px 4px}
+
+/* ---- Phase 5: gallery management ---- */
+.gal-tools{display:flex;flex-wrap:wrap;gap:12px 18px;align-items:end;justify-content:center;padding:12px 18px;border-radius:18px}
+.gal-tools label{display:grid;gap:4px;font-size:.85rem;font-weight:500;text-align:left}
+.gal-tools label.check{display:flex;align-items:center;padding-bottom:8px}
+.gal-tools select{padding:8px 10px;border-radius:12px;border:1px solid var(--glass-line);background:var(--field);min-width:130px}
+.gtop{display:flex;align-items:center;gap:6px;width:100%;justify-content:space-between}
+.gname{font-weight:700;font-size:.92rem;cursor:text;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;flex:1;text-align:left}
+.gname:hover{text-decoration:underline dotted}
+.gname-edit{flex:1;min-width:0;padding:4px 8px;border-radius:8px;border:1px solid var(--violet);background:var(--field);font-weight:700}
+.fav{border:0;background:none;font-size:1.4rem;line-height:1;color:var(--muted);padding:0 4px}
+.fav.on{color:var(--pink)}
+.fav:hover{transform:scale(1.15)}
+
+/* ---- passcode lock ---- */
+.lock{display:none}
+.locked .lock{position:fixed;inset:0;z-index:100;display:grid;place-items:center;padding:24px}
+.locked .nav,.locked main,.locked .toast{display:none}
+.lock-card{width:min(360px,100%);border-radius:var(--r);padding:28px 24px;display:grid;gap:12px;justify-items:center;text-align:center}
+.lock-logo{font:800 3rem/1 "Bricolage Grotesque",sans-serif;letter-spacing:-.03em;background:linear-gradient(90deg,var(--pink),var(--violet));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lock-card h2{margin:0;font-size:1.4rem}
+.lock-card .sub{margin:0 0 6px}
+.lock-input{width:9.5ch;padding:12px 0;text-align:center;font:700 2rem/1 "DM Sans",sans-serif;letter-spacing:.35em;text-indent:.35em;border-radius:16px;border:2px solid var(--glass-line);background:var(--field)}
+.lock-input:focus{border-color:var(--violet);outline:none;box-shadow:0 0 0 4px rgba(124,77,255,.2)}
+.lock-msg{min-height:1.4em;margin:0;color:var(--pink);font-weight:700;font-size:.9rem}
+.lock-card.shake{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}

@@ -14,7 +14,7 @@
     { a: '#ff8cc6', b: '#9b7bff' }, { a: '#ffc4e1', b: '#c4b5fd' }
   ];
   const state = {
-    layoutId: store.get('layout', 'strip4'),
+    layoutId: store.get('layout', 'plain'),
     photos: [],
     opts: { bg: store.get('bg', BGS[0]), gap: store.get('gap', 24), round: store.get('round', true), caption: '', date: false },
     countdown: store.get('countdown', 3),
@@ -25,7 +25,8 @@
     busy: false, cancel: false,
     screen: 'home', mode: 'new', retakeIdx: null, uploadIdx: null,
     fx: IrieFX.defaultFx(), items: [], sel: null, compare: false,
-    tab: 'design', fxTab: 'color', stickerCat: 'Hearts', hist: [], histIdx: -1
+    tab: 'design', fxTab: 'color', stickerCat: 'Hearts', hist: [], histIdx: -1, themeId: '',
+    order: [], pe: {}, selPhoto: 0, uploadEdit: false
   };
   {
     const e = store.get('effect', 'none');
@@ -38,11 +39,11 @@
   const tag = c => { c._id = ++uid; return c; };
 
   /* ---------- layouts ---------- */
-  function strip(n, name) {
+  function strip(n, name, W0 = 600) {
     return {
       id: 'strip' + n, name, count: n, aspect: 4 / 3,
       geom(o) {
-        const W = 600, pad = 36, gap = o.gap, pw = W - pad * 2, ph = Math.round(pw * 3 / 4);
+        const W = W0, pad = 36, gap = o.gap, pw = W - pad * 2, ph = Math.round(pw * 3 / 4);
         const fh = (o.caption.trim() || o.date) ? 150 : 70;
         const slots = [];
         for (let i = 0; i < n; i++) slots.push({ x: pad, y: pad + i * (ph + gap), w: pw, h: ph });
@@ -58,7 +59,84 @@
       return { w: W, h: pad + ps + fh, slots: [{ x: pad, y: pad, w: ps, h: ps }], r: o.round ? 10 : 0, footer: { y: pad + ps, h: fh, size: 68 } };
     }
   };
-  const BUILTIN = [strip(4, 'Classic 4-cut'), strip(3, '3-cut strip'), strip(2, '2-cut strip'), polaroid];
+  const plain = {
+    id: 'plain', name: 'Normal photo', count: 1, aspect: 4 / 3, noStrip: true,
+    geom() { return { w: 1200, h: 900, slots: [{ x: 0, y: 0, w: 1200, h: 900 }], r: 0 }; }
+  };
+  const plainP = {
+    id: 'plainp', name: 'Normal photo (portrait)', count: 1, aspect: 3 / 4, noStrip: true,
+    geom() { return { w: 900, h: 1200, slots: [{ x: 0, y: 0, w: 900, h: 1200 }], r: 0 }; }
+  };
+  const hasText = o => !!(o.caption.trim() || o.date);
+  function grid(cols, rows, name, id) {
+    return {
+      id, name, count: cols * rows, aspect: 1,
+      geom(o) {
+        const W = cols === 3 ? 900 : 700, pad = 32, gap = o.gap, cw = (W - pad * 2 - (cols - 1) * gap) / cols, slots = [];
+        for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) slots.push({ x: pad + c * (cw + gap), y: pad + r * (cw + gap), w: cw, h: cw });
+        const bottom = pad + rows * cw + (rows - 1) * gap, fh = hasText(o) ? 130 : pad;
+        return { w: W, h: bottom + fh, slots, r: o.round ? 12 : 0, footer: { y: bottom, h: fh, size: 52 } };
+      }
+    };
+  }
+  const hstrip = {
+    id: 'hstrip', name: 'Horizontal strip', count: 4, aspect: 1,
+    geom(o) {
+      const pad = 32, gap = o.gap, cw = 300, W = pad * 2 + 4 * cw + 3 * gap, slots = [];
+      for (let i = 0; i < 4; i++) slots.push({ x: pad + i * (cw + gap), y: pad, w: cw, h: cw });
+      const bottom = pad + cw, fh = hasText(o) ? 130 : pad;
+      return { w: W, h: bottom + fh, slots, r: o.round ? 12 : 0, footer: { y: bottom, h: fh, size: 52 } };
+    }
+  };
+  const dpolaroid = {
+    id: 'dpolaroid', name: 'Double Polaroid', count: 2, aspect: 1,
+    geom(o) {
+      const cw = 560, ch = 680, pad = 50, gap = Math.max(o.gap, 20) + 20, W = pad * 2 + cw * 2 + gap, cards = [], slots = [];
+      for (let i = 0; i < 2; i++) { const x = pad + i * (cw + gap); cards.push({ x, y: pad, w: cw, h: ch, r: 6 }); slots.push({ x: x + 30, y: pad + 30, w: 500, h: 500 }); }
+      const bottom = pad + ch, fh = hasText(o) ? 130 : pad;
+      return { w: W, h: bottom + fh, slots, cards, r: o.round ? 8 : 0, footer: { y: bottom, h: fh, size: 52 } };
+    }
+  };
+  const film = {
+    id: 'film', name: 'Film strip', count: 4, aspect: 1.5,
+    geom(o) {
+      const W = 600, side = 74, pw = W - side * 2, ph = Math.round(pw / 1.5), gap = 34, pad = 26, slots = [];
+      for (let i = 0; i < 4; i++) slots.push({ x: side, y: pad + i * (ph + gap), w: pw, h: ph });
+      const bottom = pad + 4 * ph + 3 * gap, fh = hasText(o) ? 110 : pad, H = bottom + fh;
+      return {
+        w: W, h: H, slots, r: 0, bg: '#141414', ink: '#f4f4f4', footer: { y: bottom, h: fh, size: 48 },
+        deco(ctx) {
+          ctx.fillStyle = '#e9e4d8';
+          for (let y = 14; y < H - 20; y += 44) { rr(ctx, 22, y, 30, 22, 5); ctx.fill(); rr(ctx, W - 52, y, 30, 22, 5); ctx.fill(); }
+          ctx.fillStyle = '#ff9a3c'; ctx.font = '600 18px "DM Sans", sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'alphabetic';
+          slots.forEach((sl, i) => ctx.fillText(String(i + 1) + 'A', sl.x + 4, sl.y + sl.h + 22));
+        }
+      };
+    }
+  };
+  const collage = {
+    id: 'collage', name: 'Collage', count: 4, aspect: 520 / 840,
+    geom(o) {
+      const pad = 30, gap = o.gap, W = 900, bh = 840, bw = 520, sx = pad + bw + gap, sw = W - pad - sx, sh = (bh - 2 * gap) / 3;
+      const slots = [{ x: pad, y: pad, w: bw, h: bh }];
+      for (let i = 0; i < 3; i++) slots.push({ x: sx, y: pad + i * (sh + gap), w: sw, h: sh });
+      const bottom = pad + bh, fh = hasText(o) ? 120 : pad;
+      return { w: W, h: bottom + fh, slots, r: o.round ? 12 : 0, footer: { y: bottom, h: fh, size: 52 } };
+    }
+  };
+  const scrap = {
+    id: 'scrap', name: 'Scrapbook', count: 4, aspect: 4 / 3,
+    geom(o) {
+      const b = 16, r = o.round ? 8 : 0;
+      return { w: 900, h: 1250, r, slots: [
+        { x: 70, y: 70, w: 420, h: 315, rot: -5, border: b }, { x: 430, y: 260, w: 420, h: 315, rot: 4, border: b },
+        { x: 90, y: 560, w: 420, h: 315, rot: 3, border: b }, { x: 410, y: 850, w: 420, h: 315, rot: -4, border: b }
+      ] };
+    }
+  };
+  const BUILTIN = [plain, plainP, strip(4, 'Classic 4-cut'), strip(3, '3-cut strip'), strip(2, '2-cut strip'), strip(6, '6-cut strip', 500), hstrip,
+    grid(2, 2, '2 × 2 grid', 'grid22'), grid(2, 3, '2 × 3 grid', 'grid23'), grid(3, 3, '3 × 3 grid', 'grid33'),
+    polaroid, dpolaroid, film, collage, scrap];
   let layouts = [...BUILTIN];
   const cur = () => layouts.find(l => l.id === state.layoutId) || layouts[0];
 
@@ -121,10 +199,10 @@
     ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
     ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
   }
-  function drawCover(ctx, img, s) {
-    const iw = img.width, ih = img.height, k = Math.max(s.w / iw, s.h / ih);
+  function drawCover(ctx, img, s, z = 1, ox = 0, oy = 0) {
+    const iw = img.width, ih = img.height, k = Math.max(s.w / iw, s.h / ih) * z;
     const sw = s.w / k, sh = s.h / k;
-    ctx.drawImage(img, (iw - sw) / 2, (ih - sh) / 2, sw, sh, s.x, s.y, s.w, s.h);
+    ctx.drawImage(img, (iw - sw) / 2 * (1 + ox), (ih - sh) / 2 * (1 + oy), sw, sh, s.x, s.y, s.w, s.h);
   }
   function drawPlaceholder(ctx, s, i) {
     const gr = ctx.createLinearGradient(s.x, s.y, s.x + s.w, s.y + s.h);
@@ -213,25 +291,40 @@
     canvas.width = Math.round(g.w * s); canvas.height = Math.round(g.h * s);
     const ctx = canvas.getContext('2d');
     ctx.setTransform(s, 0, 0, s, 0, 0); ctx.imageSmoothingQuality = 'high';
-    const bg = o.bg;
+    const bg = g.bg ? { a: g.bg } : o.bg;
     if (bg.b) { const gr = ctx.createLinearGradient(0, 0, g.w * 0.4, g.h); gr.addColorStop(0, bg.a); gr.addColorStop(1, bg.b); ctx.fillStyle = gr; }
     else ctx.fillStyle = bg.a;
     ctx.fillRect(0, 0, g.w, g.h);
-    const fx = glOK && ex.fx && !IrieFX.isNeutral(ex.fx) ? ex.fx : null, fxKey = fx ? JSON.stringify(fx) : '';
+    (g.cards || []).forEach(cd => {
+      ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.25)'; ctx.shadowBlur = 18 * s; ctx.shadowOffsetY = 6 * s;
+      ctx.fillStyle = '#fff'; rr(ctx, cd.x, cd.y, cd.w, cd.h, cd.r || 6); ctx.fill(); ctx.restore();
+    });
+    if (g.deco) g.deco(ctx, g);
+    const glFx = glOK && ex.fx ? ex.fx : null;
     g.slots.forEach((sl, i) => {
-      const p = photos ? photos[i] : null;
-      ctx.save(); rr(ctx, sl.x, sl.y, sl.w, sl.h, g.r || 0); ctx.clip();
-      if (p && fx) {
-        const sw = Math.max(1, Math.round(sl.w * s)), sh = Math.max(1, Math.round(sl.h * s)), key = `${p._id}|${sw}x${sh}|${fxKey}`;
+      const p = photos ? photos[i] : null, pe = (ex.pe && ex.pe[i]) || {};
+      const z = pe.zoom || 1, ox = pe.ox || 0, oy = pe.oy || 0;
+      let f = glFx; if (f && pe.effect) f = { ...f, effect: pe.effect };
+      if (f && IrieFX.isNeutral(f)) f = null;
+      ctx.save();
+      if (sl.rot) { const cx = sl.x + sl.w / 2, cy = sl.y + sl.h / 2; ctx.translate(cx, cy); ctx.rotate(sl.rot * Math.PI / 180); ctx.translate(-cx, -cy); }
+      if (sl.border) {
+        const b = sl.border; ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 14 * s; ctx.shadowOffsetY = 5 * s;
+        ctx.fillStyle = '#fff'; rr(ctx, sl.x - b, sl.y - b, sl.w + 2 * b, sl.h + b * 3, 4); ctx.fill(); ctx.restore();
+      }
+      rr(ctx, sl.x, sl.y, sl.w, sl.h, g.r || 0); ctx.clip();
+      if (p && f) {
+        const sw = Math.max(1, Math.round(sl.w * s)), sh = Math.max(1, Math.round(sl.h * s));
+        const key = `${p._id}|${sw}x${sh}|${JSON.stringify(f)}|${z}|${ox}|${oy}`;
         let t = ex.nocache ? null : fxCache.get(key);
-        if (!t) { t = fxPhoto(p, sw, sh, fx); if (!ex.nocache) { if (fxCache.size > 24) fxCache.delete(fxCache.keys().next().value); fxCache.set(key, t); } }
+        if (!t) { t = fxPhoto(p, sw, sh, f, z, ox, oy); if (!ex.nocache) { if (fxCache.size > 24) fxCache.delete(fxCache.keys().next().value); fxCache.set(key, t); } }
         ctx.drawImage(t, sl.x, sl.y, sl.w, sl.h);
-      } else if (p) drawCover(ctx, p, sl);
+      } else if (p) drawCover(ctx, p, sl, z, ox, oy);
       else drawPlaceholder(ctx, sl, i);
       ctx.restore();
     });
     if (g.overlay) ctx.drawImage(g.overlay, 0, 0, g.w, g.h);
-    else drawFooter(ctx, g, o, bg.b || lum(bg.a) > 0.5 ? '#2a1740' : '#ffffff');
+    else drawFooter(ctx, g, o, g.ink || o.ink || (bg.b || lum(bg.a) > 0.5 ? '#2a1740' : '#ffffff'));
     (ex.items || []).forEach(it => drawItem(ctx, it, g, s));
     return g;
   }
@@ -256,14 +349,14 @@
     state.layoutId = L.id; store.set('layout', L.id);
     $('#stage').style.setProperty('--ar', L.aspect);
     refreshPickers();
-    if (state.screen === 'edit') { commit(); renderEdit(); }
+    if (state.screen === 'edit') { commit(); renderEdit(); renderPhotos(); }
   }
   function refreshPickers() {
     buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); });
     buildPicker($('#boothLayouts'), null, setLayout);
     const have = state.photos.filter(Boolean).length;
     buildPicker($('#editLayouts'), L => L.count <= have, setLayout);
-    $('#builtinControls').hidden = !!cur().frame;
+    $('#builtinControls').hidden = !!(cur().frame || cur().noStrip);
   }
   function buildHero() {
     const o = { ...state.opts, caption: '', date: false, bg: BGS[0] };
@@ -361,9 +454,9 @@
 
   /* ---------- live effects ---------- */
   let liveR = null, workR = null, glOK = false, liveRaf = 0, boothThumbs = [], thumbIdx = 0;
-  const glParams = (fx, time, mirror) => ({ effect: fx.effect, k: fx.strength / 100, adj: fx.adj, time, mirror });
-  function fxPhoto(p, sw, sh, fx) {
-    workR.draw(p, p.width, p.height, glParams(fx, p._seed || 0, false), sw, sh);
+  const glParams = (fx, time, mirror, zoom, ox, oy) => ({ effect: fx.effect, k: fx.strength / 100, adj: fx.adj, time, mirror, zoom, ox, oy });
+  function fxPhoto(p, sw, sh, fx, z, ox, oy) {
+    workR.draw(p, p.width, p.height, glParams(fx, p._seed || 0, false, z, ox, oy), sw, sh);
     const c = document.createElement('canvas'); c.width = sw; c.height = sh; c.getContext('2d').drawImage(workR.canvas, 0, 0);
     return c;
   }
@@ -487,7 +580,7 @@
       const stage = $('#stage'), fl = $('#flash');
       fl.classList.remove('go'); stage.classList.remove('snap'); void fl.offsetWidth; fl.classList.add('go'); stage.classList.add('snap');
       shutterSound();
-      state.photos[indices[k]] = grabFrame();
+      state.photos[indices[k]] = grabFrame(); delete state.pe[indices[k]];
       setProgress(indices.length > 1 ? `Photo ${k + 1} of ${indices.length}` : 'Got it!', total, state.photos.filter(Boolean).length);
       if (k < indices.length - 1) { await sleep(Math.max(state.delay, 1) * 1000); }
     }
@@ -529,14 +622,16 @@
       return tag(c);
     } finally { URL.revokeObjectURL(url); }
   }
-  function pickFiles(idx) { state.uploadIdx = idx; $('#fileInput').click(); }
+  function pickFiles(idx) { state.uploadIdx = idx; state.uploadEdit = false; $('#fileInput').click(); }
   $('#fileInput').addEventListener('change', async e => {
     const files = [...e.target.files]; e.target.value = '';
     if (!files.length) return;
     try {
       if (state.uploadIdx !== null) {
-        state.photos[state.uploadIdx] = await fileToCanvas(files[0]);
-        state.uploadIdx = null; renderReview(); return;
+        const idx = state.uploadIdx;
+        state.photos[idx] = await fileToCanvas(files[0]); delete state.pe[idx]; state.uploadIdx = null;
+        if (state.uploadEdit) { state.uploadEdit = false; commit(); renderPhotos(); renderEdit(); } else renderReview();
+        return;
       }
       const n = Math.min(files.length, 4);
       const L = BUILTIN.find(l => l.count === n) || BUILTIN[0];
@@ -571,7 +666,7 @@
   }
 
   /* ---------- edit: history ---------- */
-  const snap = () => JSON.stringify({ fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId });
+  const snap = () => JSON.stringify({ fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId, order: state.order, pe: state.pe });
   function commit() {
     const j = snap();
     if (state.hist[state.histIdx] === j) return;
@@ -582,23 +677,25 @@
   function restore(i) {
     state.histIdx = i;
     const d = JSON.parse(state.hist[i]);
-    state.fx = d.fx; state.items = d.items; state.opts = d.opts; state.layoutId = d.layoutId;
+    state.fx = d.fx; state.items = d.items; state.opts = d.opts; state.layoutId = d.layoutId; state.order = d.order || []; state.pe = d.pe || {};
     if (!state.items.find(it => it.id === state.sel)) state.sel = null;
     syncAll(); renderEdit(); updateUndoUI();
   }
   function undo() { if (state.histIdx > 0) restore(state.histIdx - 1); }
   function redo() { if (state.histIdx < state.hist.length - 1) restore(state.histIdx + 1); }
   function updateUndoUI() { $('#undoBtn').disabled = state.histIdx <= 0; $('#redoBtn').disabled = state.histIdx >= state.hist.length - 1; }
-  function resetEdit() { state.items = []; state.sel = null; state.hist = []; state.histIdx = -1; }
+  function resetEdit() { state.items = []; state.sel = null; state.hist = []; state.histIdx = -1; state.order = []; state.pe = {}; state.selPhoto = 0; state.themeId = ''; }
 
   /* ---------- edit: render ---------- */
   let raf, lastG = null, lastS = 1;
-  const photosNow = () => state.photos.slice(0, cur().count);
+  function ensureOrder() { if (state.order.length !== state.photos.length) state.order = state.photos.map((_, i) => i); }
+  const photosNow = () => { ensureOrder(); return state.order.map(i => state.photos[i]).slice(0, cur().count); };
+  const peNow = () => { ensureOrder(); return state.order.map(i => state.pe[i] || null).slice(0, cur().count); };
   function renderEdit() {
     cancelAnimationFrame(raf);
     raf = requestAnimationFrame(() => {
       const out = $('#outCanvas'), L = cur();
-      lastG = render(out, L, photosNow(), state.opts, 900, { fx: state.compare ? null : state.fx, items: state.items });
+      lastG = render(out, L, photosNow(), state.opts, 900, { fx: state.compare ? null : state.fx, items: state.items, pe: peNow() });
       lastS = out.width / lastG.w;
       const ov = $('#overlay'); ov.width = out.width; ov.height = out.height;
       drawOverlay();
@@ -707,7 +804,7 @@
     $('#captionInp').value = state.opts.caption; $('#dateChk').checked = state.opts.date;
     buildSwatches(); refreshPickers();
   }
-  function syncAll() { syncDesign(); syncFx(); syncSel(); updateUndoUI(); }
+  function syncAll() { syncDesign(); syncFx(); syncSel(); renderPhotos(); updateUndoUI(); }
 
   function buildSwatches() {
     const box = $('#swatches'); box.innerHTML = '';
@@ -715,11 +812,11 @@
     BGS.forEach(b => {
       const sw = document.createElement('button'); sw.className = 'sw' + (same(b) ? ' on' : '');
       sw.style.background = b.b ? `linear-gradient(135deg,${b.a},${b.b})` : b.a; sw.setAttribute('aria-label', 'Background ' + b.a);
-      sw.onclick = () => { state.opts.bg = b; store.set('bg', b); buildSwatches(); refreshPickers(); commit(); renderEdit(); };
+      sw.onclick = () => { state.opts.bg = b; delete state.opts.ink; store.set('bg', b); buildSwatches(); refreshPickers(); commit(); renderEdit(); };
       box.append(sw);
     });
     const c = document.createElement('input'); c.type = 'color'; c.value = state.opts.bg.a; c.setAttribute('aria-label', 'Custom background color');
-    c.oninput = () => { state.opts.bg = { a: c.value }; store.set('bg', state.opts.bg); renderEdit(); };
+    c.oninput = () => { state.opts.bg = { a: c.value }; delete state.opts.ink; store.set('bg', state.opts.bg); renderEdit(); };
     c.onchange = () => { commit(); buildSwatches(); };
     box.append(c);
   }
@@ -798,6 +895,76 @@
     });
   }
 
+  /* ---------- edit: individual photos ---------- */
+  const getPE = () => { const pi = state.order[state.selPhoto]; return state.pe[pi] || (state.pe[pi] = {}); };
+  function renderPhotos() {
+    const list = $('#phList'); list.innerHTML = '';
+    const ph = photosNow(); if (state.selPhoto >= ph.length) state.selPhoto = 0;
+    ph.forEach((p, i) => {
+      const b = document.createElement('button'); b.className = i === state.selPhoto ? 'on' : '';
+      const c = document.createElement('canvas'); c.width = 96; c.height = 72;
+      if (p) drawCover(c.getContext('2d'), p, { x: 0, y: 0, w: 96, h: 72 });
+      const l = document.createElement('span'); l.textContent = 'Photo ' + (i + 1); b.append(c, l);
+      b.onclick = () => { state.selPhoto = i; renderPhotos(); }; list.append(b);
+    });
+    const pe = state.pe[state.order[state.selPhoto]] || {};
+    $('#phFx').value = pe.effect || ''; $('#phZoom').value = Math.round((pe.zoom || 1) * 100);
+    $('#phX').value = Math.round((pe.ox || 0) * 100); $('#phY').value = Math.round((pe.oy || 0) * 100);
+    $('#phUp').disabled = state.selPhoto <= 0; $('#phDown').disabled = state.selPhoto >= ph.length - 1;
+    $('#phFx').disabled = !glOK;
+  }
+  function buildPhFx() {
+    const sel = $('#phFx'); sel.innerHTML = '';
+    const add = (p, v, t) => { const o = document.createElement('option'); o.value = v; o.textContent = t; p.append(o); };
+    add(sel, '', 'Same as all photos'); add(sel, 'none', 'No effect');
+    IrieFX.CATS.forEach(c => {
+      const g = document.createElement('optgroup'); g.label = c.name;
+      IrieFX.EFFECTS.filter(e => e.cat === c.id).forEach(e => add(g, e.id, e.name)); sel.append(g);
+    });
+  }
+  function movePhoto(d) {
+    const i = state.selPhoto, j = i + d, n = photosNow().length; if (j < 0 || j >= n) return;
+    [state.order[i], state.order[j]] = [state.order[j], state.order[i]];
+    state.selPhoto = j; commit(); renderPhotos(); renderEdit();
+  }
+
+  /* ---------- edit: themes ---------- */
+  const THEMES = [
+    { id: 'y2k', name: 'Y2K', layout: 'strip4', bg: { a: '#ff9ad5', b: '#8ee8ff' }, ink: '#2a1740', effect: 'bloom', strength: 60, caption: 'y2k forever', gap: 20, round: true, items: [['✨', .15, .07, .12, -10], ['💿', .86, .06, .14, 12], ['🦋', .14, .95, .13, -8], ['💖', .86, .95, .12, 10]] },
+    { id: 'korean', name: 'Korean Photobooth', layout: 'strip4', bg: { a: '#ffffff' }, ink: '#2a1740', effect: 'pastel', strength: 55, caption: 'our 4 cuts', date: true, gap: 14, round: false, items: [['🤍', .86, .07, .1, 0], ['🎀', .14, .95, .11, -8]] },
+    { id: 'vfilm', name: 'Vintage Film', layout: 'film', bg: { a: '#141414' }, ink: '#f4f4f4', effect: 'vintage', strength: 100, adj: { grain: 35, vignette: 25 }, caption: 'film roll', gap: 34, round: false, items: [] },
+    { id: 'arcade', name: 'Retro Arcade', layout: 'strip4', bg: { a: '#1b1030' }, ink: '#ffffff', effect: 'neon', strength: 70, caption: 'player 1', gap: 18, round: false, items: [['🕹️', .14, .06, .12, -10], ['👾', .86, .06, .12, 10], ['⭐', .86, .95, .1, 0]] },
+    { id: 'coquette', name: 'Pink Coquette', layout: 'strip4', bg: { a: '#ffd6ec' }, ink: '#2a1740', effect: 'pastel', strength: 50, caption: 'coquette', gap: 22, round: true, items: [['🎀', .14, .06, .14, -12], ['🎀', .86, .06, .14, 12], ['🩷', .86, .95, .1, 0], ['🌸', .14, .95, .11, 0]] },
+    { id: 'dreamy', name: 'Dreamy Pastel', layout: 'strip4', bg: { a: '#ffc4e1', b: '#c4b5fd' }, ink: '#2a1740', effect: 'dreamy', strength: 80, caption: 'dreamy', gap: 22, round: true, items: [['☁️', .15, .07, .14, 0], ['✨', .86, .06, .11, 10], ['🦋', .14, .95, .12, -8], ['🌈', .86, .95, .12, 0]] },
+    { id: 'academia', name: 'Dark Academia', layout: 'strip4', bg: { a: '#2e2118' }, ink: '#f4e8d8', effect: 'vintage', strength: 75, adj: { contrast: 12, vignette: 30 }, caption: 'dark academia', gap: 16, round: false, items: [['📚', .15, .06, .12, -8], ['🕯️', .86, .06, .12, 8], ['🍂', .86, .95, .11, 0]] },
+    { id: 'summer', name: 'Summer Memories', layout: 'strip4', bg: { a: '#ffe29a', b: '#ff9a8b' }, ink: '#2a1740', effect: 'warm', strength: 80, adj: { saturation: 20 }, caption: 'summer memories', date: true, gap: 22, round: true, items: [['☀️', .86, .06, .14, 0], ['🏖️', .14, .95, .12, 0], ['🍉', .86, .95, .11, 0]] },
+    { id: 'xmas', name: 'Christmas', layout: 'strip4', bg: { a: '#b3202a', b: '#1f6b3a' }, ink: '#ffffff', effect: 'warm', strength: 40, caption: 'merry christmas', gap: 22, round: true, items: [['🎄', .14, .06, .14, -8], ['⭐', .86, .06, .11, 10], ['🎅', .14, .95, .12, 0], ['❄️', .86, .95, .11, 0]] },
+    { id: 'valentine', name: "Valentine's Day", layout: 'strip4', bg: { a: '#ff9ab8', b: '#ff4f8b' }, ink: '#ffffff', effect: 'warm', strength: 35, caption: 'be mine', gap: 22, round: true, items: [['💘', .14, .06, .13, -10], ['💖', .86, .06, .12, 10], ['💌', .14, .95, .12, 0], ['🌹', .86, .95, .12, 0]] },
+    { id: 'birthday', name: 'Birthday', layout: 'strip4', bg: { a: '#ffe08a', b: '#ff9ad5' }, ink: '#2a1740', effect: 'citrus', strength: 50, caption: 'happy birthday', gap: 22, round: true, items: [['🎂', .14, .06, .13, -8], ['🎈', .86, .06, .13, 8], ['🎉', .14, .95, .12, 0], ['🎁', .86, .95, .12, 0]] },
+    { id: 'bw', name: 'Classic Black & White', layout: 'strip4', bg: { a: '#ffffff' }, ink: '#2a1740', effect: 'bw', strength: 100, caption: '', gap: 20, round: false, items: [] }
+  ];
+  function buildThemes() {
+    const box = $('#themeList'); box.innerHTML = '';
+    THEMES.forEach(t => {
+      const b = document.createElement('button'); b.className = 'theme-btn'; b.textContent = t.name;
+      b.style.background = t.bg.b ? `linear-gradient(135deg,${t.bg.a},${t.bg.b})` : t.bg.a; b.style.color = t.ink;
+      b.onclick = () => applyTheme(t); box.append(b);
+    });
+  }
+  function applyTheme(t) {
+    const have = state.photos.filter(Boolean).length, L = layouts.find(l => l.id === t.layout);
+    if (L && L.count <= have) state.layoutId = L.id;
+    state.opts.bg = t.bg; state.opts.ink = t.ink; state.opts.round = t.round; state.opts.gap = t.gap;
+    state.opts.caption = t.caption || ''; state.opts.date = !!t.date;
+    const base = IrieFX.defaultFx();
+    state.fx = { effect: glOK && liveR.usable(t.effect) ? t.effect : 'none', strength: t.strength || 100, adj: { ...base.adj, ...(t.adj || {}) } };
+    store.set('effect', state.fx.effect);
+    state.items = state.items.filter(it => !it.theme);
+    t.items.forEach(([v, nx, ny, size, rot]) => state.items.push({ id: 'i' + (++uid), type: 'emoji', value: v, nx, ny, size, rot, locked: false, theme: true }));
+    state.themeId = t.id; state.sel = null; commit(); syncAll(); renderEdit();
+    toast(t.name + ' applied');
+  }
+
   /* ---------- edit: enter / export ---------- */
   function enterEdit() {
     const have = state.photos.filter(Boolean).length;
@@ -822,7 +989,7 @@
   async function renderFinal(width) {
     const L = cur(), c = document.createElement('canvas');
     await Promise.all(state.items.filter(it => it.type === 'img').map(it => imgReady(it.value)));
-    render(c, L, photosNow(), state.opts, width, { fx: state.fx, items: state.items, nocache: true });
+    render(c, L, photosNow(), state.opts, width, { fx: state.fx, items: state.items, pe: peNow(), nocache: true });
     return c;
   }
   async function download() {
@@ -850,6 +1017,56 @@
     del(id) { return this.run('readwrite', s => s.delete(id)); },
     clear() { return this.run('readwrite', s => s.clear()); }
   };
+  /* ---------- shared gallery (optional, Supabase) ---------- */
+  const CFG = window.IRIE_CONFIG || {};
+  const Cloud = {
+    on: !!(CFG.supabaseUrl && CFG.supabaseKey),
+    h(extra) { return { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey, ...(extra || {}) }; },
+    pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
+    async upload(path, blob) {
+      const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });
+      if (!r.ok) throw new Error('upload failed');
+    },
+    async list() {
+      const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?select=*&order=created.desc`, { headers: this.h() });
+      if (!r.ok) throw new Error('list failed');
+      return (await r.json()).map(w => ({
+        id: w.id, created: Number(w.created), name: w.name, layoutId: w.layout_id, layoutName: w.layout_name, themeId: w.theme_id, themeName: w.theme_name,
+        favorite: !!w.favorite, thumbUrl: this.pub(w.thumb_path), finalUrl: this.pub(w.final_path),
+        originals: (w.originals || []).map(o => ({ url: this.pub(o.path), seed: o.seed })), project: w.project,
+        _paths: [w.final_path, w.thumb_path, ...(w.originals || []).map(o => o.path)]
+      }));
+    },
+    async save(rec) {
+      const base = rec.id + '/', orig = [];
+      await this.upload(base + 'final.png', rec.final); await this.upload(base + 'thumb.jpg', rec.thumb);
+      for (let i = 0; i < rec.originals.length; i++) { const p = `${base}o${i}.jpg`; await this.upload(p, rec.originals[i].blob); orig.push({ path: p, seed: rec.originals[i].seed }); }
+      const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations`, {
+        method: 'POST', headers: this.h({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
+        body: JSON.stringify({ id: rec.id, created: rec.created, name: rec.name, layout_id: rec.layoutId, layout_name: rec.layoutName, theme_id: rec.themeId || '', theme_name: rec.themeName || '', favorite: false, final_path: base + 'final.png', thumb_path: base + 'thumb.jpg', originals: orig, project: rec.project })
+      });
+      if (!r.ok) throw new Error('save failed');
+    },
+    async patch(id, fields) {
+      const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: this.h({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify(fields) });
+      if (!r.ok) throw new Error('update failed');
+    },
+    async del(rec) {
+      await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie`, { method: 'DELETE', headers: this.h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: rec._paths || [] }) });
+      const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?id=eq.${encodeURIComponent(rec.id)}`, { method: 'DELETE', headers: this.h() });
+      if (!r.ok) throw new Error('delete failed');
+    }
+  };
+  const GS = {
+    all: () => (Cloud.on ? Cloud.list() : DB.all()),
+    save: rec => (Cloud.on ? Cloud.save(rec) : DB.put(rec)),
+    update: rec => (Cloud.on ? Cloud.patch(rec.id, { name: rec.name, favorite: !!rec.favorite }) : DB.put(rec)),
+    del: rec => (Cloud.on ? Cloud.del(rec) : DB.del(rec.id)),
+    async clearAll(list) { if (Cloud.on) { for (const r of list) await Cloud.del(r); } else await DB.clear(); }
+  };
+  async function finalBlob(rec) { if (rec.final) return rec.final; const r = await fetch(rec.finalUrl); if (!r.ok) throw new Error('fetch'); return r.blob(); }
+  async function origBlob(o) { if (o.blob) return o.blob; const r = await fetch(o.url); if (!r.ok) throw new Error('fetch'); return r.blob(); }
+
   async function saveToGallery() {
     try {
       const L = cur();
@@ -857,13 +1074,15 @@
       const originals = [];
       for (const p of state.photos) if (p) originals.push({ blob: await toBlob(p, 'image/jpeg', 0.92), seed: p._seed || 0 });
       const d = new Date();
-      await DB.put({
-        id: 'c' + Date.now(), created: d.getTime(), name: 'irie ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
+      await GS.save({
+        id: 'c' + Date.now() + Math.random().toString(36).slice(2, 6), created: d.getTime(), name: 'irie ' + d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) + ' ' + d.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' }),
         layoutId: L.id, layoutName: L.name, final, thumb, originals,
-        project: { fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId }
+        project: { fx: state.fx, items: state.items, opts: state.opts, layoutId: state.layoutId, order: state.order, pe: state.pe, themeId: state.themeId },
+        favorite: false, themeId: state.themeId, themeName: (THEMES.find(t => t.id === state.themeId) || {}).name || ''
       });
-      toast('Saved to your gallery');
-    } catch { toast('Could not save here. Your browser may block local storage.'); }
+      if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(() => {});
+      toast(Cloud.on ? 'Saved to the shared gallery' : 'Saved to your gallery');
+    } catch { toast(Cloud.on ? 'Could not reach the shared gallery. Check your internet and try again.' : 'Could not save here. Your browser may block local storage.'); }
   }
   async function convertBlob(blob, type) {
     const bmp = await createImageBitmap(blob), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
@@ -871,41 +1090,96 @@
     return toBlob(c, type, 0.92);
   }
   async function downloadRec(rec, jpeg) {
-    try { const blob = jpeg ? await convertBlob(rec.final, 'image/jpeg') : rec.final; saveBlob(blob, `irie-${rec.id}.${jpeg ? 'jpg' : 'png'}`); }
+    try { const base = await finalBlob(rec); const blob = jpeg ? await convertBlob(base, 'image/jpeg') : base; saveBlob(blob, `irie-${rec.id}.${jpeg ? 'jpg' : 'png'}`); }
     catch { toast('Could not download that one.'); }
   }
   async function openRec(rec) {
     try {
       const photos = [];
       for (const o of rec.originals) {
-        const bmp = await createImageBitmap(o.blob), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
+        const bmp = await createImageBitmap(await origBlob(o)), c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height;
         c.getContext('2d').drawImage(bmp, 0, 0); c._seed = o.seed || 0; photos.push(tag(c));
       }
       const pj = rec.project;
-      state.photos = photos; state.fx = pj.fx; state.items = pj.items; state.opts = pj.opts; state.layoutId = pj.layoutId;
+      state.photos = photos; state.fx = pj.fx; state.items = pj.items; state.opts = pj.opts; state.layoutId = pj.layoutId; state.order = pj.order || []; state.pe = pj.pe || {}; state.selPhoto = 0; state.themeId = pj.themeId || '';
       state.sel = null; state.hist = []; state.histIdx = -1; state.mode = 'new';
       goTo('edit');
     } catch { toast('Could not open that creation.'); }
   }
   let galleryUrls = [];
+  const galState = { sort: store.get('gsort', 'new'), layout: store.get('glayout', ''), theme: store.get('gtheme', ''), fav: store.get('gfav', false) };
+  const fmtWhen = t => new Date(t).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+
+  function startRename(rec, el) {
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = rec.name; inp.maxLength = 40; inp.className = 'gname-edit';
+    el.replaceWith(inp); inp.focus(); inp.select();
+    let finished = false;
+    const finish = async save => {
+      if (finished) return; finished = true;
+      const v = inp.value.trim();
+      if (save && v && v !== rec.name) { rec.name = v; try { await GS.update(rec); } catch { toast('Could not rename that one.'); } }
+      el.textContent = rec.name; inp.replaceWith(el);
+    };
+    inp.onkeydown = e => { if (e.key === 'Enter') finish(true); else if (e.key === 'Escape') finish(false); };
+    inp.onblur = () => finish(true);
+  }
+  function thumbObjUrl(rec) { const u = URL.createObjectURL(rec.thumb); galleryUrls.push(u); return u; }
   function recCard(rec, small) {
     const card = document.createElement('div'); card.className = 'gcard glass';
-    const url = URL.createObjectURL(rec.thumb); galleryUrls.push(url);
-    const im = document.createElement('img'); im.src = url; im.alt = rec.name; im.onclick = () => (small ? goTo('gallery') : openRec(rec)); card.append(im);
-    if (small) return card;
-    const m = document.createElement('div'); m.className = 'meta'; m.textContent = rec.name + ' · ' + rec.layoutName; card.append(m);
+    const im = document.createElement('img'); im.src = rec.thumbUrl || thumbObjUrl(rec); im.alt = rec.name; im.onclick = () => (small ? goTo('gallery') : openRec(rec));
+    if (small) { card.append(im); return card; }
+    const top = document.createElement('div'); top.className = 'gtop';
+    const name = document.createElement('div'); name.className = 'gname'; name.textContent = rec.name; name.tabIndex = 0; name.title = 'Click to rename';
+    name.onclick = () => startRename(rec, name);
+    name.onkeydown = e => { if (e.key === 'Enter') startRename(rec, name); };
+    const fav = document.createElement('button'); fav.className = 'fav' + (rec.favorite ? ' on' : ''); fav.textContent = rec.favorite ? '♥' : '♡';
+    fav.setAttribute('aria-label', rec.favorite ? 'Remove from favorites' : 'Add to favorites'); fav.setAttribute('aria-pressed', String(!!rec.favorite));
+    fav.onclick = async () => { rec.favorite = !rec.favorite; try { await GS.update(rec); } catch { toast('Could not save that.'); } renderGallery(); };
+    top.append(name, fav); card.append(top, im);
+    const m = document.createElement('div'); m.className = 'meta';
+    m.textContent = fmtWhen(rec.created) + ' · ' + rec.layoutName + (rec.themeName ? ' · ' + rec.themeName : ''); card.append(m);
     const row = document.createElement('div'); row.className = 'row';
     const mk = (t, fn) => { const b = document.createElement('button'); b.className = 'btn ghost'; b.textContent = t; b.onclick = fn; row.append(b); };
     mk('Edit', () => openRec(rec)); mk('PNG', () => downloadRec(rec, false)); mk('JPEG', () => downloadRec(rec, true));
-    mk('Delete', async () => { if (confirm('Delete this creation?')) { await DB.del(rec.id); renderGallery(); } });
+    mk('Delete', async () => { if (confirm('Delete "' + rec.name + '"?' + (Cloud.on ? ' It will be removed for everyone.' : ''))) { try { await GS.del(rec); } catch { toast('Could not delete that one.'); } renderGallery(); } });
     card.append(row); return card;
   }
-  async function loadAll() { try { return (await DB.all()).sort((a, b) => b.created - a.created); } catch { return []; } }
+  async function loadAll() { try { return (await GS.all()).sort((a, b) => b.created - a.created); } catch { toast(Cloud.on ? 'Could not load the shared gallery.' : 'Could not open the gallery here.'); return []; } }
+  function fillSelect(sel, pairs, value) {
+    sel.innerHTML = '';
+    pairs.forEach(([v, t]) => { const o = document.createElement('option'); o.value = v; o.textContent = t; sel.append(o); });
+    sel.value = pairs.some(p => p[0] === value) ? value : '';
+    return sel.value;
+  }
+  async function showStorage() {
+    const el = $('#galStorage');
+    if (Cloud.on) { el.textContent = ''; return; }
+    try { const e = await navigator.storage.estimate(); el.textContent = `Using about ${(e.usage / 1048576).toFixed(1)} MB on this device.`; } catch { el.textContent = ''; }
+  }
   async function renderGallery() {
     galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = [];
-    const list = await loadAll(), grid = $('#galleryGrid'); grid.innerHTML = '';
-    $('#galleryEmpty').hidden = list.length > 0; $('#clearGallery').hidden = !list.length;
+    $('#galNote').textContent = Cloud.on ? 'Shared gallery: everyone with the passcode can see these pictures.' : 'Saved on this device only. Nothing is uploaded.';
+    const all = await loadAll(), grid = $('#galleryGrid'); grid.innerHTML = '';
+    $('#galTools').hidden = !all.length; $('#galleryEmpty').hidden = all.length > 0;
+    $('#clearGallery').hidden = !all.length; $('#clearNonFav').hidden = !all.some(r => r.favorite);
+    if (!all.length) { $('#galCount').textContent = ''; showStorage(); return; }
+    const layoutsSeen = new Map(), themesSeen = new Map();
+    all.forEach(r => { layoutsSeen.set(r.layoutId, r.layoutName); if (r.themeId) themesSeen.set(r.themeId, r.themeName || r.themeId); });
+    galState.layout = fillSelect($('#galLayout'), [['', 'All layouts'], ...layoutsSeen], galState.layout);
+    galState.theme = fillSelect($('#galTheme'), [['', 'All themes'], ['none', 'No theme'], ...themesSeen], galState.theme);
+    $('#galSort').value = galState.sort; $('#galFav').checked = galState.fav;
+    let list = all.filter(r => (!galState.layout || r.layoutId === galState.layout)
+      && (!galState.theme || (galState.theme === 'none' ? !r.themeId : r.themeId === galState.theme)) && (!galState.fav || r.favorite));
+    const by = {
+      new: (a, b) => b.created - a.created, old: (a, b) => a.created - b.created,
+      fav: (a, b) => (b.favorite ? 1 : 0) - (a.favorite ? 1 : 0) || b.created - a.created,
+      name: (a, b) => a.name.localeCompare(b.name)
+    };
+    list = list.sort(by[galState.sort] || by.new);
+    $('#galCount').textContent = list.length === all.length ? `${all.length} saved` : `Showing ${list.length} of ${all.length}`;
+    if (!list.length) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = 'No creations match these filters.'; grid.append(p); }
     list.forEach(r => grid.append(recCard(r, false)));
+    showStorage();
   }
   async function renderRecent() {
     const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
@@ -946,7 +1220,16 @@
   $('#dateChk').onchange = e => { state.opts.date = e.target.checked; commit(); renderEdit(); };
   $('#downloadBtn').onclick = download;
   $('#saveBtn').onclick = saveToGallery;
-  $('#clearGallery').onclick = async () => { if (confirm('Delete everything saved in this gallery? This cannot be undone.')) { await DB.clear(); renderGallery(); toast('Gallery cleared'); } };
+  [['#galSort', 'sort', 'gsort'], ['#galLayout', 'layout', 'glayout'], ['#galTheme', 'theme', 'gtheme']].forEach(([id, k, sk]) => {
+    $(id).onchange = e => { galState[k] = e.target.value; store.set(sk, galState[k]); renderGallery(); };
+  });
+  $('#galFav').onchange = e => { galState.fav = e.target.checked; store.set('gfav', galState.fav); renderGallery(); };
+  $('#clearNonFav').onclick = async () => {
+    if (!confirm('Delete everything that is not a favorite?' + (Cloud.on ? ' This removes them for everyone.' : '') + ' This cannot be undone.')) return;
+    const all = await loadAll(); for (const r of all) if (!r.favorite) { try { await GS.del(r); } catch { /* skip */ } }
+    renderGallery(); toast('Kept your favorites');
+  };
+  $('#clearGallery').onclick = async () => { if (confirm('Delete everything saved in this gallery?' + (Cloud.on ? ' This removes it for EVERYONE.' : '') + ' This cannot be undone.')) { try { await GS.clearAll(await loadAll()); } catch { toast('Could not clear everything.'); } renderGallery(); toast('Gallery cleared'); } };
 
   // toolbar
   $('#undoBtn').onclick = undo; $('#redoBtn').onclick = redo;
@@ -964,6 +1247,14 @@
     else if (mod && e.key.toLowerCase() === 'y') { e.preventDefault(); redo(); }
     else if (!typing && (e.key === 'Delete' || e.key === 'Backspace') && selected()) { e.preventDefault(); $('#selDel').click(); }
   });
+
+  // individual photos
+  $('#phFx').onchange = e => { const pe = getPE(); if (e.target.value) pe.effect = e.target.value; else delete pe.effect; commit(); renderEdit(); };
+  const phSlider = (id, fn) => { $(id).addEventListener('input', e => { fn(getPE(), +e.target.value); renderEdit(); }); $(id).addEventListener('change', commit); };
+  phSlider('#phZoom', (pe, v) => { pe.zoom = v / 100; }); phSlider('#phX', (pe, v) => { pe.ox = v / 100; }); phSlider('#phY', (pe, v) => { pe.oy = v / 100; });
+  $('#phUp').onclick = () => movePhoto(-1); $('#phDown').onclick = () => movePhoto(1);
+  $('#phReplace').onclick = () => { state.uploadIdx = state.order[state.selPhoto]; state.uploadEdit = true; $('#fileInput').click(); };
+  $('#phReset').onclick = () => { delete state.pe[state.order[state.selPhoto]]; commit(); renderPhotos(); renderEdit(); };
 
   // tabs + filters
   $$('.tabs button').forEach(b => b.onclick = () => setTab(b.dataset.tab));
@@ -1012,6 +1303,7 @@
   addEventListener('pagehide', stopCamera);
 
   /* ---------- start ---------- */
-  initGL(); buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers(); renderRecent();
-  if (!layouts.find(l => l.id === state.layoutId)) state.layoutId = 'strip4';
+  if (Cloud.on) $('#leadText').textContent = 'Take a few photos, pick a layout, download your strip. Saved pictures go to the shared gallery.';
+  initGL(); buildThemes(); buildPhFx(); buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers(); renderRecent();
+  if (!layouts.find(l => l.id === state.layoutId)) state.layoutId = 'plain';
 })();

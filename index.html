@@ -9,8 +9,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=DM+Sans:wght@400;500;700&family=Caveat:wght@600&family=Pacifico&family=Permanent+Marker&display=swap">
   <link rel="stylesheet" href="style.css">
+  <script src="lock.js"></script>
 </head>
 <body>
+
+<div id="lock" class="lock" role="dialog" aria-modal="true" aria-labelledby="lockTitle">
+  <div class="lock-card glass">
+    <div class="lock-logo">irie</div>
+    <h2 id="lockTitle">enter the passcode</h2>
+    <p class="sub">saving memories</p>
+    <input id="lockInput" class="lock-input" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" aria-label="4-digit passcode" placeholder="••••">
+    <label class="check"><input type="checkbox" id="lockRemember"> Remember me on this device</label>
+    <p id="lockMsg" class="lock-msg" role="alert"></p>
+    <button id="lockGo" class="btn primary big">Unlock</button>
+  </div>
+</div>
 
 <header class="nav glass">
   <button class="logo" data-go="home" aria-label="irie home">irie</button>
@@ -19,6 +32,7 @@
     <button data-go="booth">Photobooth</button>
     <button data-go="gallery">Gallery</button>
   </nav>
+  <button id="relock" class="icon-btn" aria-label="Lock irie" title="Lock">🔒</button>
   <button id="themeBtn" class="icon-btn" aria-label="Switch light or dark theme">◐</button>
 </header>
 
@@ -30,7 +44,7 @@
       <div class="hero-text">
         <h1><span class="hl hl-pink">crismiel</span> and <span class="hl hl-purple">irish</span> own little photobooth</h1>
         <p class="tagline">saving memories</p>
-        <p class="lead">Take a few photos, pick a layout, download your strip. Everything stays on your device.</p>
+        <p id="leadText" class="lead">Take a few photos, pick a layout, download your strip. Everything stays on your device.</p>
         <div class="cta">
           <button id="startBtnHome" class="btn primary big">Start Photobooth</button>
           <button id="uploadBtnHome" class="btn ghost big">Upload Photos</button>
@@ -90,6 +104,7 @@
           <button data-cat="color" class="chip on">Color</button>
           <button data-cat="warp" class="chip">Distortion</button>
           <button data-cat="art" class="chip">Artistic</button>
+          <button data-cat="multi" class="chip">Multi</button>
           <button id="fxRandom" class="chip">Random</button>
         </div>
         <div id="fxStrip" class="fx-strip"></div>
@@ -150,10 +165,28 @@
   <section id="gallery" class="screen" hidden>
     <div class="center-col">
       <h2>Your gallery</h2>
-      <p class="sub">Saved on this device only. Nothing is uploaded.</p>
+      <p id="galNote" class="sub">Saved on this device only. Nothing is uploaded.</p>
+      <div id="galTools" class="gal-tools glass" hidden>
+        <label>Sort
+          <select id="galSort">
+            <option value="new">Newest first</option>
+            <option value="old">Oldest first</option>
+            <option value="fav">Favorites first</option>
+            <option value="name">Name A–Z</option>
+          </select>
+        </label>
+        <label>Layout <select id="galLayout"></select></label>
+        <label>Theme <select id="galTheme"></select></label>
+        <label class="check"><input type="checkbox" id="galFav"> Favorites only</label>
+      </div>
+      <p id="galCount" class="sub"></p>
       <div id="galleryGrid" class="gallery-grid"></div>
       <p id="galleryEmpty" class="sub" hidden>Nothing saved yet. Take some photos, then press Save to gallery.</p>
-      <button id="clearGallery" class="btn ghost" hidden>Delete all saved creations</button>
+      <p id="galStorage" class="hint center-text"></p>
+      <div class="row center">
+        <button id="clearNonFav" class="btn ghost" hidden>Delete all except favorites</button>
+        <button id="clearGallery" class="btn ghost" hidden>Delete all saved creations</button>
+      </div>
     </div>
   </section>
 
@@ -208,12 +241,17 @@
 
         <div class="tabs" role="tablist">
           <button data-tab="design" class="on">Design</button>
+          <button data-tab="photos">Photos</button>
           <button data-tab="filters">Filters</button>
           <button data-tab="stickers">Stickers</button>
           <button data-tab="text">Text</button>
         </div>
 
         <div class="tabpane" id="tab-design">
+          <div>
+            <h3>Themes</h3>
+            <div id="themeList" class="theme-list"></div>
+          </div>
           <div>
             <h3>Layout</h3>
             <div id="editLayouts" class="layouts"></div>
@@ -235,6 +273,22 @@
           <div class="row">
             <button id="backReview" class="btn ghost">Back to photos</button>
             <button id="newSession" class="btn ghost">New photobooth</button>
+          </div>
+        </div>
+
+        <div class="tabpane" id="tab-photos" hidden>
+          <div id="phList" class="fx-grid"></div>
+          <div class="stack">
+            <label>Filter for this photo <select id="phFx"></select></label>
+            <label>Zoom <input type="range" id="phZoom" min="100" max="300" value="100"></label>
+            <label>Move left / right <input type="range" id="phX" min="-100" max="100" value="0"></label>
+            <label>Move up / down <input type="range" id="phY" min="-100" max="100" value="0"></label>
+            <div class="row">
+              <button id="phUp" class="btn ghost small">Move earlier</button>
+              <button id="phDown" class="btn ghost small">Move later</button>
+              <button id="phReplace" class="btn ghost small">Replace photo</button>
+              <button id="phReset" class="btn ghost small">Reset photo</button>
+            </div>
           </div>
         </div>
 
@@ -271,6 +325,7 @@
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
 <div id="toast" class="toast" role="status"></div>
 
+<script src="config.js"></script>
 <script src="fx.js"></script>
 <script src="app.js"></script>
 </body>
