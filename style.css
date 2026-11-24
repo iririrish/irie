@@ -138,8 +138,9 @@ main>#home{flex:1 1 0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr)
 .lead{max-width:46ch;margin:0 0 22px;color:var(--muted)}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
 .flow{margin:18px 0 0;font-size:.95rem;color:var(--muted)}
-.hero-stack{position:relative;height:min(46vh,430px);min-width:0}
-.hero-stack canvas{position:absolute;border-radius:6px;box-shadow:var(--shadow)}
+.hero-stack{position:relative;display:grid;place-items:center;height:min(46vh,430px);min-width:0}
+.cluster{position:relative;width:min(100%,340px);height:100%}   /* keeps the three strips close together */
+.cluster canvas{position:absolute;border-radius:6px;box-shadow:var(--shadow)}
 #heroA{height:92%;left:6%;top:4%;transform:rotate(-6deg)}
 #heroB{height:58%;right:2%;top:0;transform:rotate(7deg)}
 #heroC{height:60%;right:10%;bottom:0;transform:rotate(-3deg)}
@@ -281,8 +282,6 @@ input.gname-edit{flex:1;min-width:0;min-height:var(--ctl-s);padding:0 8px;border
 .skin strong{font-size:.92rem}
 .skin .tag{font-size:.75rem;color:var(--muted)}
 .skin[aria-disabled="true"]{opacity:.55;cursor:not-allowed}
-.hp-preview{gap:6px}
-.hp-preview img{height:48px;width:auto;border-radius:6px;border:1px solid var(--glass-line)}
 
 /* ---------- motion ---------- */
 @keyframes snap{50%{transform:scale(.985)}}

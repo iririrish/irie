@@ -69,11 +69,9 @@ The very first thing anyone sees is a full-screen **"Enter the password"** page 
 
 To change the passcode: open the site, open the browser console (F12), type `irieHash('1234')` with your new number, and paste the result into `PASS_HASH` in `lock.js`.
 
-## Your pictures on the home page
+## Home page photo strips
 
-The photo strips on the right of the home page can show your own pictures, in every theme.
-- **For everyone:** put up to 4 pictures in the `home/` folder on GitHub and list them in `home/home.json` (see `home/README.md`).
-- **Just for you:** open Settings (gear button) and use **Home page pictures → Choose pictures**. They are saved on that device and win over the folder.
+The strips on the right of the home page show **random pictures from your gallery**, and a new random set is picked every time the page is loaded. They use the original photos saved with your creations (from the shared gallery if you turned it on, otherwise from this device). With an empty gallery, they show pink placeholder frames. Nothing to set up.
 
 ## Settings and themes
 
@@ -148,7 +146,6 @@ frames/           your photobooth frame designs (PNG) + frames.json
 fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
 lock.js           the passcode page
 theme.js          the theme list and the Settings panel
-home/             pictures for the home page photo strips (see home/README.md)
 themes/           one stylesheet per extra theme (pixel.css, night.css, y2k.css) and theme images (see themes/README.md). The default look lives in style.css
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
@@ -226,6 +223,10 @@ Custom frame images that switch with each theme, more themes, a portrait-shaped 
 
 ## Changelog
 
+### v0.9.2 – 2026-11-21
+- The home page photo strips now fill themselves with **random pictures from your gallery**, a new random set on every refresh. The manual "Home page pictures" option (Settings and the `home/` folder) is removed.
+- **Strips close together:** in every theme except Pixel Pastel Town, the three strips now sit in one tight group instead of drifting to opposite sides on wide screens. Pixel Pastel Town keeps its own spaced-out frames.
+
 ### v0.9.1 – 2026-11-21
 - **Full UI cleanup.** The stylesheet was rewritten in one clean order (tokens, base, shell, components, pages, responsive) and the conflicting, duplicate and outdated rules were removed.
 - **Uses the whole screen.** The 1100 px column is gone. Pages now fill the width with one shared side margin that scales with the screen, and the menu bar lines up with the page.
@@ -233,7 +234,6 @@ Custom frame images that switch with each theme, more themes, a portrait-shaped 
 - **Overlaps fixed:** the effect name no longer sits on top of the progress pill and fullscreen button on narrow cameras; the Pixel taskbar style links no longer collide with the menu on mid-size screens; the phone menu wraps instead of squeezing; editor tabs wrap; Night Garden's menu no longer slides under the page; the passcode page decorations hide on short screens.
 - **One size for everything:** shared sizes for buttons, inputs, dropdowns, chips and icon buttons; shared corner radii and spacing; the review and gallery grids resize instead of using fixed widths.
 - Side panels in the camera and editor stay in view and scroll on their own instead of making the whole page scroll.
-- **Home page pictures:** your own pictures can fill the home page photo strips (folder `home/` or Settings).
 - Night Garden now shows the strips on the right of the home page too.
 
 ### v0.9.0 – 2026-11-20

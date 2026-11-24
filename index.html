@@ -60,9 +60,11 @@
         <p class="flow">Capture → Customize → Download</p>
       </div>
       <div class="hero-stack" aria-hidden="true">
-        <canvas id="heroA"></canvas>
-        <canvas id="heroB"></canvas>
-        <canvas id="heroC"></canvas>
+        <div class="cluster">
+          <canvas id="heroA"></canvas>
+          <canvas id="heroB"></canvas>
+          <canvas id="heroC"></canvas>
+        </div>
         <div class="px px-strip"><i></i><i></i><i></i><i></i></div>
         <div class="px px-polaroid"><i></i></div>
         <svg class="px px-heart ph1" viewBox="0 0 7 6" shape-rendering="crispEdges"><path d="M1 0h2v1h1V0h2v1h1v2H6v1H5v1H4v1H3V5H2V4H1V3H0V1h1z" fill="#ff5fa2"/></svg>
@@ -346,15 +348,10 @@
     <div id="skinList" class="skin-list"></div>
     <h3>Mode</h3>
     <div class="seg" id="modeSeg"><button data-mode="light">Light</button><button data-mode="dark">Dark</button></div>
-    <h3>Home page pictures</h3>
-    <p class="hint">Put your own pictures in the photo strips on the home page. Saved on this device only. To show them to everyone, add them to the <b>home</b> folder on GitHub (see the README).</p>
-    <div id="homePhotoPreview" class="row hp-preview"></div>
-    <div class="row"><button id="homePhotoAdd" class="btn ghost small">Choose pictures (up to 4)</button><button id="homePhotoReset" class="btn ghost small">Use the default</button></div>
   </div>
 </div>
 
 <input type="file" id="fileInput" accept="image/*" multiple hidden>
-<input type="file" id="homePhotoInput" accept="image/*" multiple hidden>
 <div id="toast" class="toast" role="status"></div>
 
 <script src="theme.js"></script>
