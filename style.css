@@ -129,7 +129,7 @@ details summary{cursor:pointer;font-weight:700;margin-bottom:10px}
 /* ---------- home: one screen, no scrolling ---------- */
 main>#home{flex:1 1 0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr) auto;gap:var(--gap);
   overflow:hidden;overflow:clip;padding:12px;margin:-12px}   /* the padding gives shadows room; the negative margin keeps it aligned with other pages */
-.home-hero{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,.85fr);gap:clamp(16px,3vw,40px);align-items:center;min-height:0}
+.home-hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,.95fr);gap:clamp(16px,3vw,40px);align-items:center;min-height:0}
 .home-hero h1{margin:0 0 14px;font-size:clamp(2rem,min(5.4vw,9vh),4.8rem);line-height:1;font-weight:800;letter-spacing:-.035em}
 .hl{padding:0 .08em;-webkit-box-decoration-break:clone;box-decoration-break:clone}
 .hl-pink{background:linear-gradient(transparent 58%,rgba(255,79,163,.5) 58%)}
@@ -138,12 +138,16 @@ main>#home{flex:1 1 0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr)
 .lead{max-width:46ch;margin:0 0 22px;color:var(--muted)}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
 .flow{margin:18px 0 0;font-size:.95rem;color:var(--muted)}
-.hero-stack{position:relative;display:grid;place-items:center;height:min(46vh,430px);min-width:0}
-.cluster{position:relative;width:min(100%,340px);height:100%}   /* keeps the three strips close together */
-.cluster canvas{position:absolute;border-radius:6px;box-shadow:var(--shadow)}
-#heroA{height:92%;left:6%;top:4%;transform:rotate(-6deg)}
-#heroB{height:58%;right:2%;top:0;transform:rotate(7deg)}
-#heroC{height:60%;right:10%;bottom:0;transform:rotate(-3deg)}
+.hero-stack{--stack-h:min(54vh,520px);position:relative;display:grid;place-items:center;height:var(--stack-h);min-width:0}
+.cluster{position:relative;width:min(100%,calc(var(--stack-h) * 1.2));aspect-ratio:1.2}   /* one tight group: strip, card, loose photos, two polaroids */
+.hs{position:absolute;filter:drop-shadow(0 6px 9px rgba(80,40,100,.28))}
+.hs canvas{display:block;height:100%;width:auto}
+.hs-a{left:1%;top:3%;height:92%;transform:rotate(-7deg)}
+.hs-b{left:27%;top:1%;height:68%}
+.hs-b::after{content:"";position:absolute;left:9%;right:9%;bottom:7%;height:8.5%;border-radius:50%;background:#62ab49;box-shadow:0 0 0 3px #62ab49,inset 0 0 0 2px rgba(255,255,255,.9)}
+.hs-c{left:56%;top:3%;height:50%}
+.hs-d{left:40%;top:56%;height:42%;transform:rotate(-7deg)}
+.hs-e{left:62%;top:52%;height:46%;transform:rotate(8deg)}
 .px,.dock-count,.tb-clock{display:none}
 .home-dock{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--gap);padding:10px 18px;border-radius:var(--r);
   background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -298,7 +302,7 @@ input.gname-edit{flex:1;min-width:0;min-height:var(--ctl-s);padding:0 8px;border
 }
 @media (max-width:860px){
   .home-hero{grid-template-columns:minmax(0,1fr);gap:10px}
-  .hero-stack{order:-1;height:24vh;min-height:130px}
+  .hero-stack{--stack-h:max(24vh,130px);order:-1}
   .home-hero h1{font-size:clamp(2rem,9vw,3rem)}
   .home-dock{border-radius:var(--r-md)}
 }

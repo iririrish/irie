@@ -276,6 +276,12 @@ Custom frame images that switch with each theme, more themes, a portrait-shaped 
 
 ## Changelog
 
+### v0.9.7 – 2026-11-22
+- **New home page strip design** (Classic Glass, Night Garden, Y2K Desktop): a tilted pink 4-photo strip, a cream 2-photo card with a green oval sticker, four loose photos, and two overlapping heart-pattern polaroids, all in one tight group. Pixel Pastel Town keeps its own frames.
+- The group is **bigger** (about 20% larger) and the home page columns are balanced, so there is less empty space.
+- Empty frames now show a sky-and-hills picture (also in the layout thumbnails) instead of a plain gradient.
+- Random gallery pictures now fill all five shapes (8 random pictures per page load).
+
 ### v0.9.6 – 2026-11-21
 - Fix: moving pictures to the shared gallery failed with "new row violates row-level security policy" after an earlier attempt had stopped half-way. The app now removes leftover files first and no longer needs the overwrite permission, so retrying works.
 

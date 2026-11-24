@@ -134,6 +134,30 @@
       ] };
     }
   };
+  /* shapes used only for the home page strips (not in the layout lists) */
+  const heroGrid = {
+    id: 'hero22', name: 'Loose photos', count: 4, aspect: 1,
+    geom() {
+      const W = 800, pad = 20, gap = 36, cw = (W - pad * 2 - gap) / 2, ch = Math.round(cw * 0.95), rots = [-1.4, 1.1, 0.9, -0.9], slots = [];
+      for (let k = 0; k < 4; k++) slots.push({ x: pad + (k % 2) * (cw + gap), y: pad + Math.floor(k / 2) * (ch + gap), w: cw, h: ch, rot: rots[k], outline: '#4b4b55' });
+      return { w: W, h: pad * 2 + ch * 2 + gap, slots, r: 0 };
+    }
+  };
+  const heroPol = {
+    id: 'heropol', name: 'Heart polaroid', count: 1, aspect: 0.875,
+    geom() {
+      const W = 700, H = 800;
+      return {
+        w: W, h: H, bg: '#fff6f6', r: 4, slots: [{ x: 44, y: 44, w: 612, h: 560 }],
+        deco(ctx) {
+          ctx.fillStyle = 'rgba(226,108,132,.55)';
+          for (let y = 20, row = 0; y < H; y += 42, row++) for (let x = (row % 2 ? 22 : 0) + 20; x < W; x += 44) {
+            ctx.beginPath(); ctx.moveTo(x, y + 6); ctx.bezierCurveTo(x - 10, y - 1, x - 6, y - 11, x, y - 4); ctx.bezierCurveTo(x + 6, y - 11, x + 10, y - 1, x, y + 6); ctx.fill();
+          }
+        }
+      };
+    }
+  };
   const BUILTIN = [plain, plainP, strip(4, 'Classic 4-cut'), strip(3, '3-cut strip'), strip(2, '2-cut strip'), strip(6, '6-cut strip', 500), hstrip,
     grid(2, 2, '2 × 2 grid', 'grid22'), grid(2, 3, '2 × 3 grid', 'grid23'), grid(3, 3, '3 × 3 grid', 'grid33'),
     polaroid, dpolaroid, film, collage, scrap];
@@ -205,12 +229,15 @@
     ctx.drawImage(img, (iw - sw) / 2 * (1 + ox), (ih - sh) / 2 * (1 + oy), sw, sh, s.x, s.y, s.w, s.h);
   }
   function drawPlaceholder(ctx, s, i) {
-    const gr = ctx.createLinearGradient(s.x, s.y, s.x + s.w, s.y + s.h);
-    const hue = [330, 285, 310, 260][i % 4];
-    gr.addColorStop(0, `hsl(${hue} 90% 82%)`); gr.addColorStop(1, `hsl(${hue + 40} 85% 72%)`);
-    ctx.fillStyle = gr; ctx.fillRect(s.x, s.y, s.w, s.h);
-    ctx.fillStyle = 'rgba(255,255,255,.8)'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.font = `${Math.min(s.w, s.h) * 0.25}px sans-serif`; ctx.fillText('✦', s.x + s.w / 2, s.y + s.h / 2);
+    const sky = ctx.createLinearGradient(0, s.y, 0, s.y + s.h);
+    sky.addColorStop(0, '#b4e0ff'); sky.addColorStop(1, '#eaf6ff');
+    ctx.fillStyle = sky; ctx.fillRect(s.x, s.y, s.w, s.h);
+    const hill = (cx, cy, rx, ry, col) => { ctx.fillStyle = col; ctx.beginPath(); ctx.ellipse(s.x + s.w * cx, s.y + s.h * cy, s.w * rx, s.h * ry, 0, 0, Math.PI * 2); ctx.fill(); };
+    const sh = (i % 3) * 0.06;
+    hill(0.22 + sh, 1.02, 0.7, 0.3, '#b9d86c'); hill(0.82 - sh, 1.06, 0.75, 0.26, '#86a30f');
+    const cx = s.x + s.w * (0.34 + (i % 4) * 0.08), cy = s.y + s.h * 0.24, r = Math.min(s.w, s.h) * 0.09;
+    ctx.fillStyle = '#fff';
+    [[0, 0, 1], [-1.3, 0.35, 0.75], [1.3, 0.3, 0.8], [0.1, 0.55, 1.1]].forEach(([dx, dy, k]) => { ctx.beginPath(); ctx.arc(cx + dx * r, cy + dy * r, r * k, 0, Math.PI * 2); ctx.fill(); });
   }
   function lum(hex) {
     const n = parseInt(hex.slice(1), 16); const r = n >> 16, g = (n >> 8) & 255, b = n & 255;
@@ -312,6 +339,7 @@
         const b = sl.border; ctx.save(); ctx.shadowColor = 'rgba(0,0,0,.3)'; ctx.shadowBlur = 14 * s; ctx.shadowOffsetY = 5 * s;
         ctx.fillStyle = '#fff'; rr(ctx, sl.x - b, sl.y - b, sl.w + 2 * b, sl.h + b * 3, 4); ctx.fill(); ctx.restore();
       }
+      if (sl.outline) { ctx.fillStyle = sl.outline; rr(ctx, sl.x - 2, sl.y - 2, sl.w + 4, sl.h + 4, (g.r || 0) + 1); ctx.fill(); }
       rr(ctx, sl.x, sl.y, sl.w, sl.h, g.r || 0); ctx.clip();
       if (p && f) {
         const sw = Math.max(1, Math.round(sl.w * s)), sh = Math.max(1, Math.round(sl.h * s));
@@ -367,10 +395,12 @@
   const heroSet = (start, n) => (homePhotos.length ? Array.from({ length: n }, (_, k) => homePhotos[(start + k) % homePhotos.length]) : null);
   const photoUrl = c => c._url || (c._url = c.toDataURL('image/jpeg', 0.85));
   function buildHero() {
-    const o = { ...state.opts, caption: '', date: false, bg: BGS[0] };
-    render($('#heroA'), layoutById('strip4'), heroSet(0, 4), o, 300);
-    render($('#heroB'), polaroid, heroSet(4, 1), { ...o, bg: BGS[5] }, 300);
-    render($('#heroC'), layoutById('strip3'), heroSet(5, 3), { ...o, bg: BGS[1] }, 300);
+    const o = { ...state.opts, caption: '', date: false, round: false, gap: 12 };
+    render($('#heroA'), layoutById('strip4'), heroSet(0, 4), { ...o, bg: { a: '#e8b4bc' } }, 320);
+    render($('#heroB'), layoutById('strip2'), heroSet(4, 2), { ...o, bg: { a: '#f1f0e8' } }, 320);
+    render($('#heroC'), heroGrid, heroSet(6, 4), { ...o, bg: { a: 'rgba(0,0,0,0)' } }, 360);
+    render($('#heroD'), heroPol, heroSet(2, 1), o, 300);
+    render($('#heroE'), heroPol, heroSet(5, 1), o, 300);
     // the pixel theme draws its own frames with CSS, so give them the same pictures
     const fill = (sel, first) => $$(sel).forEach((el, i) => {
       const p = homePhotos.length ? homePhotos[(first + i) % homePhotos.length] : null;
@@ -378,7 +408,7 @@
     });
     fill('.px-strip i', 0); fill('.px-polaroid i', 4);
   }
-  async function loadRandomPhotos(n = 6) {
+  async function loadRandomPhotos(n = 8) {
     const pool = [];
     (await loadAllCached()).forEach(r => (r.originals || []).forEach(o => pool.push(o)));
     for (let i = pool.length - 1; i > 0; i--) { const k = Math.floor(Math.random() * (i + 1)); [pool[i], pool[k]] = [pool[k], pool[i]]; }
