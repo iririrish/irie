@@ -1,0 +1,57 @@
+/* Theme: Night Garden. Night garden background, glass cards, gold accents, drifting fireflies. Always dark. Built from concept board 3. */
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;600;700&family=Caveat:wght@600&display=swap');
+html[data-skin="night"]{--gutter:clamp(16px,5.6vw,72px);--ink:#f1f2ff;--muted:#c3c7f0;--pink:#ffb3da;--violet:#b9a5ff;--glass:rgba(20,22,58,.6);--glass-line:rgba(255,255,255,.22);--field:rgba(255,255,255,.12);--shadow:0 12px 32px rgba(0,0,0,.35);--bg1:#141845;--bg2:#0d1030;--r:24px}
+[data-skin="night"] body{font-family:"Quicksand","DM Sans",sans-serif;color:var(--ink);
+  background:linear-gradient(180deg,rgba(18,20,60,.55),rgba(18,20,60,.18) 45%,rgba(18,20,60,.7)),url(images/night-garden.jpg) center/cover fixed}
+[data-skin="night"] h1,[data-skin="night"] h2,[data-skin="night"] h3{font-family:"Quicksand",sans-serif}
+[data-skin="night"] main,[data-skin="night"] .nav{position:relative;z-index:1}
+[data-skin="night"] .nav{position:sticky;z-index:20;top:12px;align-self:center;width:max-content;max-width:calc(100% - 24px);margin:12px auto 0}
+[data-skin="night"] .logo{background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#ffe9a8;font-family:"Quicksand",sans-serif}
+[data-skin="night"] .nav nav{margin-left:14px}
+[data-skin="night"] .nav nav button{color:#e8eaff}
+[data-skin="night"] .nav nav button:hover,[data-skin="night"] .nav nav button.active{background:rgba(255,255,255,.16);color:#fff}
+[data-skin="night"] .icon-btn{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.25)}
+/* hero glass card, garden shows on the right */
+[data-skin="night"] .home-hero{grid-template-columns:minmax(0,600px) minmax(0,1fr)}
+[data-skin="night"] .hero-text{background:var(--glass);border:1px solid var(--glass-line);border-radius:26px;padding:34px 36px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);box-shadow:var(--shadow)}
+[data-skin="night"] .home-hero h1{font-weight:700;font-size:clamp(2rem,min(4.2vw,7.5vh),3.2rem);line-height:1.08;margin:2px 0 12px}
+[data-skin="night"] .hl{background:none;padding:0}
+[data-skin="night"] .hl-pink{color:#ffb3da}[data-skin="night"] .hl-purple{color:#d4c2ff}
+[data-skin="night"] .tagline{font-family:"Caveat",cursive;font-size:2.3rem;color:#ffe9a8;order:-1;margin:0}
+[data-skin="night"] .hero-text{display:flex;flex-direction:column}
+[data-skin="night"] .lead{color:#e6e8ff}
+[data-skin="night"] .flow{color:#c9cdf5}
+[data-skin="night"] .btn{font-family:"Quicksand",sans-serif;font-weight:700;transition:transform .18s cubic-bezier(.2,.8,.2,1),box-shadow .18s}
+[data-skin="night"] .btn.primary{background:#ffd77a;color:#2a1740;box-shadow:none}
+[data-skin="night"] .btn.primary:hover:not(:disabled){box-shadow:0 0 28px rgba(255,200,110,.6)}
+[data-skin="night"] .btn.ghost{background:rgba(255,255,255,.14);color:#fff;border-color:rgba(255,255,255,.4)}
+[data-skin="night"] .btn:focus-visible,[data-skin="night"] button:focus-visible,[data-skin="night"] a:focus-visible{outline:3px solid #ffe9a8;outline-offset:3px}
+/* bottom bar */
+[data-skin="night"] .home-dock{border-radius:26px}
+[data-skin="night"] .dock-label{color:#ffe9a8}
+[data-skin="night"] .dock-thumbs{display:none}
+[data-skin="night"] .dock-count{display:inline;color:#c9cdf5;font-weight:600}
+[data-skin="night"] .layout-btn{background:rgba(255,255,255,.14)}
+[data-skin="night"] .layout-btn.on,[data-skin="night"] .skin.on{border-color:#ffe9a8;box-shadow:0 0 0 3px rgba(255,233,168,.25)}
+[data-skin="night"] .chip.on,[data-skin="night"] .tabs button.on,[data-skin="night"] .seg button.on{background:#ffd77a;color:#2a1740}
+/* fireflies */
+[data-skin="night"] body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:0;filter:drop-shadow(0 0 7px #ffe08a);animation:ffl 7s ease-in-out infinite;
+  background:radial-gradient(circle at 12% 30%,#ffe9a8 0 3px,transparent 4px),radial-gradient(circle at 44% 22%,#ffe9a8 0 3px,transparent 4px),radial-gradient(circle at 78% 54%,#ffe9a8 0 3px,transparent 4px),
+  radial-gradient(circle at 30% 66%,#ffe9a8 0 3px,transparent 4px),radial-gradient(circle at 90% 20%,#ffe9a8 0 2px,transparent 3px),radial-gradient(circle at 62% 80%,#ffe9a8 0 2px,transparent 3px)}
+@keyframes ffl{0%,100%{transform:translate(0,0);opacity:.35}50%{transform:translate(16px,-22px);opacity:1}}
+@media (prefers-reduced-motion:reduce){[data-skin="night"] body::before{animation:none;opacity:.8}[data-skin="night"] .btn{transition:none}}
+/* thin gold scrollbars */
+[data-skin="night"] *{scrollbar-color:rgba(255,233,168,.55) transparent}
+[data-skin="night"] *::-webkit-scrollbar-thumb{background:rgba(255,233,168,.5)}
+[data-skin="night"] .toast{background:#ffe9a8;color:#2a1740}
+/* night passcode page */
+html[data-skin="night"].locked .lock{background:linear-gradient(180deg,rgba(18,20,60,.6),rgba(18,20,60,.75)),url(images/night-garden.jpg) center/cover;color:#fff}
+[data-skin="night"] .lock-card{background:var(--glass);border:1px solid var(--glass-line);border-radius:26px;padding:28px 24px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
+[data-skin="night"] .lock-card h2{font-family:"Quicksand",sans-serif;font-weight:700;color:#fff}
+[data-skin="night"] .lk-lock{color:#ffe9a8}
+[data-skin="night"] .lk-dot{border-color:#ffe9a8}[data-skin="night"] .lk-dot.on{background:#ffe9a8}
+[data-skin="night"] .lk-key{font-family:"Quicksand",sans-serif;font-weight:700;background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.4);box-shadow:0 6px 0 rgba(0,0,0,.3)}
+[data-skin="night"] .lk-key:active{box-shadow:0 1px 0 rgba(0,0,0,.3)}
+[data-skin="night"] .lock-msg{color:#ffc2e0}
+[data-skin="night"] .lk-cloud,[data-skin="night"] .lk-heart{display:none}
+@media (max-width:860px){[data-skin="night"] .home-hero{grid-template-columns:minmax(0,1fr)}[data-skin="night"] .hero-text{padding:22px}}
