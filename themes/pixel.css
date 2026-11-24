@@ -1,0 +1,115 @@
+/* Theme: Pixel Pastel Town. Pixel city, chunky pixel buttons, taskbar menu. Built from concept board 1. */
+@import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap');
+html[data-skin="pixel"]{--gutter:clamp(16px,4.4vw,64px);--panel-top:16px;--panel-bottom:84px;--ink:#3b3f6b;--muted:#565b8f;--pink:#c72f86;--violet:#5b3fd1;--glass:#fff7fb;--glass-line:#3b3f6b;--field:#ffffff;--r:0px;--shadow:6px 6px 0 #3b3f6b;--bg1:#fff7fb;--bg2:#e9e2ff}
+html[data-skin="pixel"][data-theme="dark"]{--ink:#f4efff;--muted:#c9c4ee;--glass:#2b2b5c;--glass-line:#aab6ee;--field:#1f1f45;--shadow:6px 6px 0 #0f0f2a;--bg1:#2b2b5c;--bg2:#1f1f45}
+[data-skin="pixel"] body{font-family:"VT323",monospace;font-size:21px;line-height:1.2;image-rendering:pixelated;color:var(--ink);
+  background:linear-gradient(180deg,rgba(255,214,236,.35),rgba(214,200,255,.55)),url(images/pixel-city.jpg) center/cover fixed}
+[data-skin="pixel"] main{padding-bottom:84px}
+[data-skin="pixel"] h1,[data-skin="pixel"] h2,[data-skin="pixel"] h3{font-family:"Press Start 2P",monospace;font-weight:400;line-height:1.6}
+[data-skin="pixel"] h2{font-size:1rem}[data-skin="pixel"] h3{font-size:.8rem}
+[data-skin="pixel"] .glass,[data-skin="pixel"] .modal-card{background:var(--glass);border:4px solid #3b3f6b;border-radius:0;box-shadow:8px 8px 0 #3b3f6b;-webkit-backdrop-filter:none;backdrop-filter:none}
+[data-skin="pixel"][data-theme="dark"] .glass{border-color:#aab6ee;box-shadow:8px 8px 0 #0f0f2a}
+/* hero panel + tilted pixel frames, like the concept */
+[data-skin="pixel"] .home-hero{grid-template-columns:1.15fr .85fr;gap:32px}
+[data-skin="pixel"] .hero-text{background:#fff7fb;border:4px solid #3b3f6b;box-shadow:10px 10px 0 #3b3f6b;padding:32px 34px}
+[data-skin="pixel"][data-theme="dark"] .hero-text{background:#2b2b5c;border-color:#aab6ee;box-shadow:10px 10px 0 #0f0f2a}
+[data-skin="pixel"] .tagline{font-family:"VT323",monospace;font-size:1.7rem;color:var(--pink);order:-1;margin:0 0 6px}
+[data-skin="pixel"] .tagline::before{content:"▸ irie.exe · "}
+[data-skin="pixel"] .hero-text{display:flex;flex-direction:column}
+[data-skin="pixel"] .home-hero h1{font-size:clamp(1.05rem,min(2.5vw,4.4vh),1.9rem);line-height:1.8;margin:0 0 14px}
+[data-skin="pixel"] .hl{padding:0 6px}
+[data-skin="pixel"] .hl-pink{background:#ffb3da;color:#3b3f6b}
+[data-skin="pixel"] .hl-purple{background:#cdbbff;color:#3b3f6b}
+[data-skin="pixel"] .lead{font-size:1.45rem;line-height:1.15;color:var(--ink);margin:0 0 20px}
+[data-skin="pixel"] .flow{font-size:1.45rem;margin:18px 0 0}
+[data-skin="pixel"] .hero-stack canvas{display:none}
+[data-skin="pixel"] .px{display:block}
+[data-skin="pixel"] .px-strip{position:absolute;left:8%;top:0;width:34%;height:92%;background:#fff;border:4px solid #3b3f6b;box-shadow:8px 8px 0 #3b3f6b;transform:rotate(-5deg);padding:10px;box-sizing:border-box;display:grid!important;gap:8px}
+[data-skin="pixel"] .px-strip i:nth-child(1){background:#ffc4e6}[data-skin="pixel"] .px-strip i:nth-child(2){background:#d8c8ff}
+[data-skin="pixel"] .px-strip i:nth-child(3){background:#bfe3ff}[data-skin="pixel"] .px-strip i:nth-child(4){background:#ffd6a8}
+[data-skin="pixel"] .px-polaroid{position:absolute;right:4%;top:12%;width:46%;height:58%;background:#fff;border:4px solid #3b3f6b;box-shadow:8px 8px 0 #3b3f6b;transform:rotate(6deg);padding:12px 12px 48px;box-sizing:border-box}
+[data-skin="pixel"] .px-polaroid i{display:block;height:100%;background:#ffc4e6}
+[data-skin="pixel"] .px-heart{position:absolute;width:40px;animation:pxtw 1.2s steps(2) infinite}
+[data-skin="pixel"] .ph1{right:34%;top:-8px}[data-skin="pixel"] .ph2{left:0;bottom:14px;width:28px;animation-delay:.6s}
+@keyframes pxtw{50%{opacity:.25}}
+/* the pick-a-style bar and recent strips */
+[data-skin="pixel"] .home-dock{background:#fff7fb;border:4px solid #3b3f6b;border-radius:0;box-shadow:6px 6px 0 #3b3f6b;-webkit-backdrop-filter:none;backdrop-filter:none;padding:8px 14px}
+[data-skin="pixel"][data-theme="dark"] .home-dock{background:#2b2b5c;border-color:#aab6ee;box-shadow:6px 6px 0 #0f0f2a}
+[data-skin="pixel"] .dock-label{font-family:"VT323",monospace;font-size:1.4rem;font-weight:400}
+[data-skin="pixel"] .dock-label::after{content:" ▸"}
+[data-skin="pixel"] .mini-thumbs .layout-btn,[data-skin="pixel"] .dock-thumb{border-radius:0;border:3px solid #3b3f6b;box-shadow:3px 3px 0 #3b3f6b;background:#fff}
+[data-skin="pixel"] .mini-thumbs .layout-btn.on{border-color:#c72f86;box-shadow:3px 3px 0 #c72f86}
+[data-skin="pixel"] .dock-thumb img{border-radius:0}
+/* taskbar */
+[data-skin="pixel"] .nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;margin:0;border-radius:0;background:#aab6ee;border:0;border-top:4px solid #3b3f6b;box-shadow:none;padding:10px 16px;z-index:30}
+[data-skin="pixel"][data-theme="dark"] .nav{background:#3a3f8f}
+[data-skin="pixel"] .logo{font:14px "Press Start 2P",monospace;background:#ff7ac0;-webkit-background-clip:border-box;background-clip:border-box;color:#fff;border:3px solid #3b3f6b;padding:8px 10px}
+[data-skin="pixel"] .nav nav button{font:22px "VT323",monospace;border-radius:0;border:3px solid transparent;color:#3b3f6b}
+[data-skin="pixel"] .nav nav button:hover,[data-skin="pixel"] .nav nav button.active{background:#fff;border-color:#3b3f6b;color:#3b3f6b}
+[data-skin="pixel"] .icon-btn{border-radius:0;border:3px solid #3b3f6b;background:#fff;color:#3b3f6b}
+[data-skin="pixel"] .toast{bottom:80px;border-radius:0;border:3px solid #3b3f6b;font-family:"VT323",monospace;font-size:1.2rem}
+/* chunky buttons */
+[data-skin="pixel"] .btn{font:12px/1 "Press Start 2P",monospace;border:4px solid #3b3f6b;border-radius:0;padding:16px 18px;box-shadow:6px 6px 0 #3b3f6b;transition:transform .12s steps(2),box-shadow .12s steps(2)}
+[data-skin="pixel"] .btn.primary{background:#ff7ac0;color:#fff}
+[data-skin="pixel"] .btn.ghost{background:#fff;color:#3b3f6b}
+[data-skin="pixel"] .btn.big{padding:18px 20px}
+[data-skin="pixel"] .btn:hover:not(:disabled){transform:translate(3px,3px);box-shadow:3px 3px 0 #3b3f6b}
+[data-skin="pixel"] .btn:focus-visible,[data-skin="pixel"] a:focus-visible,[data-skin="pixel"] button:focus-visible{outline:4px solid #5b3fd1;outline-offset:3px}
+[data-skin="pixel"] .layout-btn,[data-skin="pixel"] .skin,[data-skin="pixel"] .chip,[data-skin="pixel"] .sw{border-radius:0}
+[data-skin="pixel"] .layout-btn.on,[data-skin="pixel"] .skin.on{border-color:#c72f86}
+/* thin pixel scrollbars */
+[data-skin="pixel"] *{scrollbar-color:#3b3f6b #ffd9ec}
+[data-skin="pixel"] *::-webkit-scrollbar-thumb{background:#3b3f6b;border-radius:0}
+[data-skin="pixel"] *::-webkit-scrollbar-track{background:#ffd9ec}
+@media (prefers-reduced-motion:reduce){[data-skin="pixel"] .btn{transition:none}[data-skin="pixel"] .px-heart{animation:none}}
+/* pixel passcode page */
+html[data-skin="pixel"].locked .lock{background:linear-gradient(rgba(255,214,236,.35),rgba(214,200,255,.55)),url(images/pixel-city.jpg) center/cover;image-rendering:pixelated;color:#3b3f6b}
+[data-skin="pixel"] .lock-card{background:#fff7fb;border:4px solid #3b3f6b;box-shadow:10px 10px 0 #3b3f6b;padding:26px 22px}
+[data-skin="pixel"] .lock-card h2{font:1rem/1.5 "Press Start 2P",monospace;color:#3b3f6b}
+[data-skin="pixel"] .lk-lock{color:#c72f86}
+[data-skin="pixel"] .lk-dot{border-radius:0;border:3px solid #3b3f6b}
+[data-skin="pixel"] .lk-dot.on{background:#ff7ac0}
+[data-skin="pixel"] .lk-key{font:1.1rem "Press Start 2P",monospace;border:4px solid #3b3f6b;border-radius:0;background:#ff7ac0;box-shadow:6px 6px 0 #3b3f6b;transition:transform .1s steps(2),box-shadow .1s steps(2)}
+[data-skin="pixel"] .lk-key:hover{transform:translate(2px,2px);box-shadow:4px 4px 0 #3b3f6b}
+[data-skin="pixel"] .lk-key:active{transform:translate(6px,6px);box-shadow:0 0 0 #3b3f6b}
+[data-skin="pixel"] .lock-msg{font-family:"VT323",monospace;font-size:1.3rem;color:#b3155e}
+[data-skin="pixel"] .lock .check{font-size:1.2rem}
+[data-skin="pixel"] .lk-cloud,[data-skin="pixel"] .lk-heart{display:none}
+@media (max-width:860px){
+  [data-skin="pixel"] .nav nav button{padding:8px 8px}
+  [data-skin="pixel"] .home-hero{grid-template-columns:minmax(0,1fr)}
+  [data-skin="pixel"] .hero-text{padding:20px}
+  [data-skin="pixel"] .hero-stack{height:22vh;min-height:130px}
+}
+
+/* "Pick a style" lives in the taskbar and "Recently created" is a badge, like the concept */
+[data-skin="pixel"] .nav{height:62px;box-sizing:border-box;gap:10px}
+[data-skin="pixel"] .nav nav{margin-left:10px}
+[data-skin="pixel"] #settingsBtn{margin-left:auto}
+[data-skin="pixel"] .home-dock{display:contents}
+[data-skin="pixel"] .dock-styles{position:fixed;right:176px;bottom:0;height:58px;z-index:31;display:flex;align-items:center;gap:8px;padding:0}
+[data-skin="pixel"] .dock-styles .dock-label{font:22px "VT323",monospace;color:#3b3f6b}
+[data-skin="pixel"] .dock-styles .mini-thumbs{overflow:visible;gap:2px;padding:0}
+[data-skin="pixel"] .mini-thumbs .layout-btn{display:block;padding:2px 8px;min-width:0;background:none;border:3px solid transparent;box-shadow:none;color:#3b3f6b;font:22px "VT323",monospace;line-height:1.1}
+[data-skin="pixel"] .mini-thumbs .layout-btn canvas,[data-skin="pixel"] .mini-thumbs .layout-btn span{display:none}
+[data-skin="pixel"] .mini-thumbs .layout-btn::after{content:attr(data-short)}
+[data-skin="pixel"] .mini-thumbs .layout-btn:hover{background:#fff;border-color:#3b3f6b}
+[data-skin="pixel"] .dock-recent{position:fixed;right:30px;bottom:80px;z-index:31;gap:6px;padding:6px 12px;background:#fff7fb;border:3px solid #3b3f6b;box-shadow:4px 4px 0 #3b3f6b}
+[data-skin="pixel"][data-theme="dark"] .dock-recent{background:#2b2b5c;border-color:#aab6ee;box-shadow:4px 4px 0 #0f0f2a}
+[data-skin="pixel"] .dock-recent .dock-label::after{content:""}
+[data-skin="pixel"] .dock-recent .dock-label{font:22px "VT323",monospace}
+[data-skin="pixel"] .dock-thumbs{display:none}
+[data-skin="pixel"] .dock-count{display:inline;font:22px "VT323",monospace;color:#3b3f6b}
+[data-skin="pixel"] .dock-recent{cursor:pointer}
+@media (max-width:1359px){   /* below this the taskbar is too narrow for the style links, so they move into the page */
+  [data-skin="pixel"] .dock-styles{position:static;height:auto;flex-wrap:wrap;background:#fff7fb;border:4px solid #3b3f6b;box-shadow:6px 6px 0 #3b3f6b;padding:6px 10px}
+  [data-skin="pixel"] .dock-recent{position:static;margin-top:8px}
+  [data-skin="pixel"] .home-dock{display:flex;flex-wrap:wrap;gap:10px;background:none;border:0;box-shadow:none;padding:0}
+}
+
+@media (max-width:640px){
+  [data-skin="pixel"] .nav{height:auto;min-height:56px;flex-wrap:wrap;justify-content:space-between;padding:8px 10px}
+  [data-skin="pixel"] .nav nav{order:3;width:100%;margin-left:0;justify-content:center}
+  [data-skin="pixel"] .nav nav button{font-size:20px}
+  [data-skin="pixel"] main{padding-bottom:120px}
+}

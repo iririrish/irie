@@ -1,0 +1,73 @@
+/* Theme: Y2K Desktop. Sparkle grid, desktop windows, glossy bubble buttons, taskbar with a clock. Built from concept board 4. */
+@import url('https://fonts.googleapis.com/css2?family=VT323&family=DM+Sans:wght@500;700&display=swap');
+html[data-skin="y2k"]{--gutter:clamp(16px,4.4vw,64px);--panel-top:16px;--panel-bottom:76px;--ink:#2a1a63;--muted:#5d4aa8;--pink:#d8307f;--violet:#6a3fe0;--glass:#f6f0ff;--glass-line:#ffffff;--field:#ffffff;--shadow:0 8px 0 rgba(88,60,160,.25),0 16px 36px rgba(88,60,160,.25);--r:14px;--bg1:#f6f0ff;--bg2:#e3d6ff}
+html[data-skin="y2k"][data-theme="dark"]{--ink:#f3edff;--muted:#cdbfff;--glass:#3a2a78;--glass-line:#a98cf0;--field:#2a1d5e;--bg1:#3a2a78;--bg2:#2a1d5e}
+[data-skin="y2k"] body{font-family:"DM Sans",sans-serif;color:var(--ink);background:url(images/y2k-grid.jpg) center/cover fixed}
+[data-skin="y2k"] main{padding-bottom:82px}
+[data-skin="y2k"] .glass,[data-skin="y2k"] .modal-card{background:var(--glass);border:2px solid #fff;border-radius:14px;-webkit-backdrop-filter:none;backdrop-filter:none}
+/* hero as a desktop window with a title bar */
+[data-skin="y2k"] .home-hero{grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);gap:28px}
+[data-skin="y2k"] .hero-text{background:var(--glass);border:2px solid #fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;padding:34px 36px}
+[data-skin="y2k"] .hero-text::before{content:"irie.exe – saving memories";display:block;margin:-34px -36px 24px;padding:8px 14px 8px 70px;color:#fff;font:21px "VT323",monospace;
+  background:radial-gradient(circle at 18px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 38px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 58px 50%,#fff 0 6px,transparent 7px),linear-gradient(90deg,#9b7bff,#ff8fcf)}
+[data-skin="y2k"] .tagline{display:none}
+[data-skin="y2k"] .home-hero h1{font-weight:700;font-size:clamp(2rem,min(4.4vw,7.6vh),3.3rem);line-height:1.06;letter-spacing:-1px;margin:0 0 12px}
+[data-skin="y2k"] .flow{font:1.5rem "VT323",monospace;color:#6a4fc0}
+[data-skin="y2k"][data-theme="dark"] .flow{color:#cdbfff}
+/* preview window */
+[data-skin="y2k"] .hero-stack{background:var(--glass);border:2px solid #fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden}
+[data-skin="y2k"] .hero-stack::before{content:"my strips.png";position:absolute;left:0;right:0;top:0;height:34px;padding:6px 14px 0 70px;color:#fff;font:21px "VT323",monospace;box-sizing:border-box;
+  background:radial-gradient(circle at 18px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 38px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 58px 50%,#fff 0 6px,transparent 7px),linear-gradient(90deg,#ff8fcf,#9b7bff)}
+[data-skin="y2k"] #heroA{height:70%;top:20%;left:8%}[data-skin="y2k"] #heroB{height:44%;top:18%;right:6%}[data-skin="y2k"] #heroC{height:46%;bottom:6%;right:12%}
+/* glossy bubble buttons */
+[data-skin="y2k"] .btn{font-weight:700;border:2px solid #fff;border-radius:999px;color:#3b2a78;background:linear-gradient(#fff,#e3d6ff 55%,#cdb8ff);box-shadow:0 5px 0 #8a6ee0,0 10px 18px rgba(88,60,160,.3);transition:transform .15s cubic-bezier(.34,1.56,.64,1)}
+[data-skin="y2k"] .btn.ghost{background:linear-gradient(#fff,#ffe0f0 55%,#ffb8da);box-shadow:0 5px 0 #e07ab0,0 10px 18px rgba(200,70,140,.3)}
+[data-skin="y2k"] .btn.primary{color:#3b2a78}
+[data-skin="y2k"] .btn:hover:not(:disabled){transform:translateY(-3px) scale(1.03)}
+[data-skin="y2k"] .btn:focus-visible,[data-skin="y2k"] button:focus-visible,[data-skin="y2k"] a:focus-visible{outline:3px solid #3b2a78;outline-offset:3px}
+/* bottom bar as a window strip */
+[data-skin="y2k"] .home-dock{background:var(--glass);border:2px solid #fff;border-radius:14px;box-shadow:var(--shadow)}
+[data-skin="y2k"] .dock-label{font:1.35rem "VT323",monospace}
+[data-skin="y2k"] .layout-btn.on,[data-skin="y2k"] .skin.on{border-color:#d8307f}
+[data-skin="y2k"] .chip.on,[data-skin="y2k"] .tabs button.on{background:linear-gradient(90deg,#9b7bff,#ff8fcf)}
+/* taskbar with a clock */
+[data-skin="y2k"] .nav{position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;max-width:none;margin:0;border-radius:0;height:58px;box-sizing:border-box;background:linear-gradient(#cdb8ff,#a98cf0);border:0;border-top:2px solid #fff;box-shadow:none;padding:8px 16px;z-index:30}
+[data-skin="y2k"][data-theme="dark"] .nav{background:linear-gradient(#5b3fd1,#3a2a78)}
+[data-skin="y2k"] .logo{background:linear-gradient(#ffd0ea,#ff8fcf);-webkit-background-clip:border-box;background-clip:border-box;color:#fff;border:2px solid #fff;border-radius:999px;padding:4px 18px;font:700 1.15rem "DM Sans",sans-serif}
+[data-skin="y2k"] .nav nav{margin-left:10px}
+[data-skin="y2k"] .nav nav button{color:#2a1a63;border-radius:8px;font-weight:700;font-size:.95rem}
+[data-skin="y2k"][data-theme="dark"] .nav nav button{color:#fff}
+[data-skin="y2k"] .nav nav button:hover,[data-skin="y2k"] .nav nav button.active{background:rgba(255,255,255,.6);color:#2a1a63}
+[data-skin="y2k"] #settingsBtn{margin-left:auto}
+[data-skin="y2k"] .icon-btn{background:rgba(255,255,255,.6);color:#2a1a63;border-color:#fff;border-radius:10px}
+[data-skin="y2k"] .tb-clock{display:inline;font:1.45rem "VT323",monospace;color:#2a1a63;margin-left:6px}
+[data-skin="y2k"][data-theme="dark"] .tb-clock{color:#fff}
+[data-skin="y2k"] .toast{bottom:76px}
+/* sparkles */
+[data-skin="y2k"] #home::before,[data-skin="y2k"] #home::after{content:"";position:absolute;pointer-events:none;width:44px;height:44px;animation:spk 3s ease-in-out infinite;
+  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 0c1 7 5 11 12 12-7 1-11 5-12 12-1-7-5-11-12-12 7-1 11-5 12-12z' fill='%23fdeedd'/%3E%3C/svg%3E") center/contain no-repeat}
+[data-skin="y2k"] #home::before{left:2%;top:4%}[data-skin="y2k"] #home::after{right:6%;top:10%;width:32px;height:32px;animation-delay:1s}
+@keyframes spk{50%{transform:scale(.6) rotate(20deg);opacity:.5}}
+@media (prefers-reduced-motion:reduce){[data-skin="y2k"] #home::before,[data-skin="y2k"] #home::after{animation:none}[data-skin="y2k"] .btn{transition:none}}
+/* thin lilac scrollbars */
+[data-skin="y2k"] *{scrollbar-color:#9b7bff transparent}
+[data-skin="y2k"] *::-webkit-scrollbar-thumb{background:#9b7bff}
+/* y2k passcode page, a small window */
+html[data-skin="y2k"].locked .lock{background:url(images/y2k-grid.jpg) center/cover;color:#2a1a63}
+[data-skin="y2k"] .lock-card{background:#f6f0ff;border:2px solid #fff;border-radius:14px;box-shadow:var(--shadow);overflow:hidden;padding:0 22px 24px}
+[data-skin="y2k"] .lock-card::before{content:"enter password.exe";justify-self:stretch;display:block;margin:0 -22px 6px;padding:8px 14px 8px 70px;color:#fff;font:21px "VT323",monospace;text-align:left;
+  background:radial-gradient(circle at 18px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 38px 50%,#fff 0 6px,transparent 7px),radial-gradient(circle at 58px 50%,#fff 0 6px,transparent 7px),linear-gradient(90deg,#9b7bff,#ff8fcf)}
+[data-skin="y2k"] .lock-card h2{font:700 1.5rem "DM Sans",sans-serif;color:#2a1a63}
+[data-skin="y2k"] .lk-lock{color:#d8307f}
+[data-skin="y2k"] .lk-dot{border-color:#8a6ee0}[data-skin="y2k"] .lk-dot.on{background:#8a6ee0}
+[data-skin="y2k"] .lk-key{font-family:"DM Sans",sans-serif;font-weight:700;color:#3b2a78;background:linear-gradient(#fff,#e3d6ff 55%,#cdb8ff);border:2px solid #fff;box-shadow:0 5px 0 #8a6ee0,0 10px 16px rgba(88,60,160,.25)}
+[data-skin="y2k"] .lk-key:active{box-shadow:0 1px 0 #8a6ee0}
+[data-skin="y2k"] .lock-msg{color:#b3155e}
+[data-skin="y2k"] .lk-cloud,[data-skin="y2k"] .lk-heart{display:none}
+@media (max-width:860px){[data-skin="y2k"] .home-hero{grid-template-columns:minmax(0,1fr)}[data-skin="y2k"] .hero-text{padding:22px}[data-skin="y2k"] .hero-text::before{margin:-22px -22px 16px}}
+
+@media (max-width:640px){
+  [data-skin="y2k"] .nav{height:auto;min-height:56px;flex-wrap:wrap;justify-content:space-between;padding:8px 10px}
+  [data-skin="y2k"] .nav nav{order:3;width:100%;margin-left:0;justify-content:center}
+  [data-skin="y2k"] main{padding-bottom:116px}
+}
