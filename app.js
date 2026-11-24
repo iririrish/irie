@@ -1060,8 +1060,9 @@
     pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
     async upload(path, blob) {
       const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });
-      if (!r.ok) throw new Error('upload failed');
+      if (!r.ok) throw new Error('uploading a file failed (' + r.status + ') ' + await this.why(r));
     },
+    async why(r) { try { const b = await r.clone().json(); return b.message || b.error || ''; } catch { return ''; } },
     async list() {
       const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?select=*&order=created.desc`, { headers: this.h() });
       if (!r.ok) throw new Error('list failed');
@@ -1075,12 +1076,13 @@
     async save(rec) {
       const base = rec.id + '/', orig = [];
       await this.upload(base + 'final.png', rec.final); await this.upload(base + 'thumb.jpg', rec.thumb);
-      for (let i = 0; i < rec.originals.length; i++) { const p = `${base}o${i}.jpg`; await this.upload(p, rec.originals[i].blob); orig.push({ path: p, seed: rec.originals[i].seed }); }
+      const ogs = rec.originals || [];
+      for (let i = 0; i < ogs.length; i++) { const p = `${base}o${i}.jpg`; await this.upload(p, ogs[i].blob); orig.push({ path: p, seed: ogs[i].seed }); }
       const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations`, {
         method: 'POST', headers: this.h({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }),
         body: JSON.stringify({ id: rec.id, created: rec.created, name: rec.name, layout_id: rec.layoutId, layout_name: rec.layoutName, theme_id: rec.themeId || '', theme_name: rec.themeName || '', favorite: false, final_path: base + 'final.png', thumb_path: base + 'thumb.jpg', originals: orig, project: rec.project })
       });
-      if (!r.ok) throw new Error('save failed');
+      if (!r.ok) throw new Error('saving the details failed (' + r.status + ') ' + await this.why(r));
     },
     async patch(id, fields) {
       const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?id=eq.${encodeURIComponent(id)}`, { method: 'PATCH', headers: this.h({ 'Content-Type': 'application/json', Prefer: 'return=minimal' }), body: JSON.stringify(fields) });
@@ -1179,7 +1181,7 @@
     mk('Delete', async () => { if (confirm('Delete "' + rec.name + '"?' + (Cloud.on ? ' It will be removed for everyone.' : ''))) { try { await GS.del(rec); } catch { toast('Could not delete that one.'); } renderGallery(); } });
     card.append(row); return card;
   }
-  async function loadAll(quiet) { try { return (await GS.all()).sort((a, b) => b.created - a.created); } catch { if (!quiet) toast(Cloud.on ? 'Could not load the shared gallery.' : 'Could not open the gallery here.'); return []; } }
+  async function loadAll(quiet) { try { return (await GS.all()).sort((a, b) => b.created - a.created); } catch { if (!quiet) { toast(Cloud.on ? 'Could not load the shared gallery. Press "Check connection" to see why.' : 'Could not open the gallery here.'); if (Cloud.on) $('#galStatus').textContent = 'Press "Check connection" to see what is wrong.'; } return []; } }
   let cacheVal = null, cacheAt = 0;   // the home page and its photos share one quick read of the gallery
   async function loadAllCached() { if (cacheVal && Date.now() - cacheAt < 10000) return cacheVal; cacheVal = await loadAll(true); cacheAt = Date.now(); return cacheVal; }
   function fillSelect(sel, pairs, value) {
@@ -1200,6 +1202,8 @@
     if (Cloud.on) {   // pictures saved on this device before sharing was turned on can be moved over
       let n = 0; try { n = (await DB.all()).length; } catch { /* no local storage */ }
       if (n) { $('#galMove').hidden = false; $('#galMove').textContent = `Move ${n} picture${n === 1 ? '' : 's'} from this device to the shared gallery`; }
+      $('#galStatus').textContent = n ? `${n} picture${n === 1 ? ' is' : 's are'} saved on this device only. Press the button to share ${n === 1 ? 'it' : 'them'}.`
+        : 'This device has no unshared pictures. If you saved pictures on another device or browser (or at a different website address), open irie there and press Move.';
     }
     cacheVal = null;
     const all = await loadAll(), grid = $('#galleryGrid'); grid.innerHTML = '';
@@ -1229,9 +1233,13 @@
     try {
       const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?select=id&limit=1`, { headers: Cloud.h() });
       if (!r.ok) {
-        out.textContent = r.status === 404 ? 'Connected, but the "creations" table is missing. Run the setup SQL from the README.'
-          : (r.status === 401 || r.status === 403) ? `The server refused the key (error ${r.status}). Check the key in config.js, and that the setup SQL ran.`
-          : `The server answered with error ${r.status}.`;
+        let b = {}; try { b = await r.json(); } catch { /* not json */ }
+        const msg = String(b.message || '');
+        out.textContent =
+          (b.code === '42501' || /permission denied/i.test(msg)) ? 'The table exists, but Supabase is not sharing it with the website yet (Supabase changed this in 2026). In Supabase open SQL Editor and run:  grant select, insert, update, delete on public.creations to anon, authenticated;  then press Check connection again.'
+          : /invalid api key/i.test(msg) ? 'Supabase says the key is not valid. Copy the key again from Project Settings > API Keys into config.js, with no spaces, and make sure it belongs to the same project as the URL.'
+          : (r.status === 404 || b.code === 'PGRST205' || b.code === '42P01') ? 'Connected, but the "creations" table is missing. Run the setup SQL from the README.'
+          : `The server answered with error ${r.status}${msg ? ': ' + msg : ''}.`;
         return;
       }
       const path = '_test/ping-' + Date.now() + '.txt';
@@ -1242,15 +1250,16 @@
     } catch { out.textContent = 'Could not reach Supabase. Check the URL in config.js and your internet.'; }
   }
   async function moveLocalToCloud() {
-    const btn = $('#galMove'); btn.disabled = true; let ok = 0, total = 0;
+    const btn = $('#galMove'), out = $('#galStatus'); btn.disabled = true; let ok = 0, total = 0, failed = '';
     try {
       const local = await DB.all(); total = local.length;
       for (const r of local) {
-        try { await Cloud.save(r); if (r.favorite) await Cloud.patch(r.id, { favorite: true }); await DB.del(r.id); ok++; toast(`Moved ${ok} of ${total}…`); }
-        catch { toast('Could not move one. Press "Check connection" to find out why.'); break; }
+        try { await Cloud.save(r); if (r.favorite) await Cloud.patch(r.id, { favorite: true }); await DB.del(r.id); ok++; out.textContent = `Moved ${ok} of ${total}…`; }
+        catch (e) { failed = `Could not move "${r.name}": ${e.message}`; break; }
       }
-    } catch { toast('Could not read the pictures on this device.'); }
-    btn.disabled = false; cacheVal = null; await renderGallery(); if (ok) toast(`Moved ${ok} to the shared gallery`);
+    } catch (e) { failed = 'Could not read the pictures saved on this device: ' + e.message; }
+    btn.disabled = false; cacheVal = null; await renderGallery();
+    out.textContent = failed ? failed : `Moved ${ok} picture${ok === 1 ? '' : 's'} to the shared gallery.`;
   }
   async function renderRecent() {
     const all = await loadAllCached(), list = all.slice(0, 3), row = $('#recentRow'); row.innerHTML = '';

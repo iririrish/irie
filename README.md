@@ -89,9 +89,41 @@ By default each person's saved pictures live only on their own device. To let ev
 
 ### Step 2. Create the storage
 1. In the left menu, open **SQL Editor** (the `</>` icon), then **New query**.
-2. Copy the whole SQL block above, paste it in, and press **Run**. You should see "Success. No rows returned."
-3. Check it worked: **Table Editor** should list a table called `creations`, and **Storage** should list a bucket called `irie` marked Public.
-4. If you see "already exists", you ran it twice. That is fine.
+2. Copy this whole block, paste it in, and press **Run**. It is safe to run again.
+
+```sql
+create table if not exists creations (
+  id text primary key,
+  created bigint not null,
+  name text not null,
+  layout_id text, layout_name text, theme_id text, theme_name text,
+  favorite boolean default false,
+  final_path text not null, thumb_path text not null,
+  originals jsonb default '[]', project jsonb
+);
+alter table creations enable row level security;
+drop policy if exists "read" on creations;
+drop policy if exists "add" on creations;
+drop policy if exists "change" on creations;
+drop policy if exists "remove" on creations;
+create policy "read" on creations for select using (true);
+create policy "add" on creations for insert with check (true);
+create policy "change" on creations for update using (true) with check (true);
+create policy "remove" on creations for delete using (true);
+-- since 2026 Supabase needs this line so the website can reach the table
+grant select, insert, update, delete on public.creations to anon, authenticated;
+
+insert into storage.buckets (id, name, public) values ('irie', 'irie', true) on conflict (id) do nothing;
+drop policy if exists "read files" on storage.objects;
+drop policy if exists "add files" on storage.objects;
+drop policy if exists "remove files" on storage.objects;
+create policy "read files" on storage.objects for select using (bucket_id = 'irie');
+create policy "add files" on storage.objects for insert with check (bucket_id = 'irie');
+create policy "remove files" on storage.objects for delete using (bucket_id = 'irie');
+```
+
+3. You should see "Success. No rows returned."
+4. Check it worked: **Table Editor** should list a table called `creations`, and **Storage** should list a bucket called `irie` marked Public.
 
 ### Step 3. Copy your two values
 1. Open **Project Settings** (gear icon, bottom left), then **API Keys** (it may be called **API**).
@@ -116,6 +148,18 @@ window.IRIE_CONFIG = {
 2. Open the **Gallery** page. Your picture is there, and the note under the title says "Shared gallery".
 3. Open irie on another phone or browser, enter the passcode, and open the Gallery. You should see the same picture.
 4. In Supabase, **Table Editor → creations** shows a new row, and **Storage → irie** shows a folder with the image files.
+
+### Error 401 or "could not load the shared gallery"
+Press **Check connection** on the Gallery page. The most common cause is a Supabase change from 2026: new tables are not shared with the website until you allow it. If you made the table before this version of the README, open **SQL Editor** in Supabase, paste this and press Run, then check again:
+
+```sql
+grant select, insert, update, delete on public.creations to anon, authenticated;
+```
+
+If it says the key is not valid, copy the key again from **Project Settings → API Keys** into `config.js`.
+
+### Moving pictures to the shared gallery
+The **Move** button only appears on the device and browser that still holds unshared pictures. Open irie there, with the same website address you saved them at, and open the Gallery. The line under the title says how many unshared pictures that device has. If a move fails, the line tells you which picture and why.
 
 ### If you can't see your pictures on another device
 1. Open the **Gallery** page. If the note says "Saved on this device only", the shared gallery is not turned on yet: `config.js` is still empty, or GitHub has not updated (wait a minute, then refresh with Ctrl+F5).
@@ -228,6 +272,16 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.9.5 – 2026-11-21
+- Gallery: when the shared gallery is on, a line always says how many pictures on this device are not shared yet, and where to look if there are none.
+- **Move** now stops with a clear message (which picture, and Supabase's own reason) instead of a vague error.
+
+### v0.9.4 – 2026-11-21
+- The full setup SQL is back in the README (it had gone missing from Step 2) and can be run again safely.
+- Shared gallery fix: the setup SQL now includes the `grant` line Supabase has required since 2026, which was the cause of "error 401" and "could not load the shared gallery" on new projects.
+- **Check connection** now reads Supabase's own error message and says which of these it is: missing grant, invalid key, or missing table.
+- README has a new section for error 401.
 
 ### v0.9.3 – 2026-11-21
 - Gallery page: new **Check connection** button for the shared gallery. It tests the table and the file storage and says in plain words what is wrong.
