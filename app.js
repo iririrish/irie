@@ -1195,7 +1195,12 @@
   }
   async function renderGallery() {
     galleryUrls.forEach(u => URL.revokeObjectURL(u)); galleryUrls = [];
-    $('#galNote').textContent = Cloud.on ? 'Shared gallery: everyone with the passcode can see these pictures.' : 'Saved on this device only. Nothing is uploaded.';
+    $('#galNote').textContent = Cloud.on ? 'Shared gallery: everyone with the passcode can see these pictures.' : 'Saved on this device only. To see your pictures on other devices, turn on the shared gallery (see the README).';
+    $('#galTest').hidden = !Cloud.on; $('#galMove').hidden = true;
+    if (Cloud.on) {   // pictures saved on this device before sharing was turned on can be moved over
+      let n = 0; try { n = (await DB.all()).length; } catch { /* no local storage */ }
+      if (n) { $('#galMove').hidden = false; $('#galMove').textContent = `Move ${n} picture${n === 1 ? '' : 's'} from this device to the shared gallery`; }
+    }
     cacheVal = null;
     const all = await loadAll(), grid = $('#galleryGrid'); grid.innerHTML = '';
     $('#galTools').hidden = !all.length; $('#galleryEmpty').hidden = all.length > 0;
@@ -1218,6 +1223,34 @@
     if (!list.length) { const p = document.createElement('p'); p.className = 'sub'; p.textContent = 'No creations match these filters.'; grid.append(p); }
     list.forEach(r => grid.append(recCard(r, false)));
     showStorage();
+  }
+  async function testCloud() {
+    const out = $('#galStatus'); out.textContent = 'Checking…';
+    try {
+      const r = await fetch(`${CFG.supabaseUrl}/rest/v1/creations?select=id&limit=1`, { headers: Cloud.h() });
+      if (!r.ok) {
+        out.textContent = r.status === 404 ? 'Connected, but the "creations" table is missing. Run the setup SQL from the README.'
+          : (r.status === 401 || r.status === 403) ? `The server refused the key (error ${r.status}). Check the key in config.js, and that the setup SQL ran.`
+          : `The server answered with error ${r.status}.`;
+        return;
+      }
+      const path = '_test/ping-' + Date.now() + '.txt';
+      const up = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: Cloud.h({ 'Content-Type': 'text/plain', 'x-upsert': 'true' }), body: new Blob(['ok'], { type: 'text/plain' }) });
+      if (!up.ok) { out.textContent = `The table works, but saving files failed (error ${up.status}). Run the storage part of the setup SQL (the "irie" bucket and its policies).`; return; }
+      await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie`, { method: 'DELETE', headers: Cloud.h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: [path] }) });
+      out.textContent = 'Connected. The shared gallery works. Pictures saved on any device with this same setup show up here.';
+    } catch { out.textContent = 'Could not reach Supabase. Check the URL in config.js and your internet.'; }
+  }
+  async function moveLocalToCloud() {
+    const btn = $('#galMove'); btn.disabled = true; let ok = 0, total = 0;
+    try {
+      const local = await DB.all(); total = local.length;
+      for (const r of local) {
+        try { await Cloud.save(r); if (r.favorite) await Cloud.patch(r.id, { favorite: true }); await DB.del(r.id); ok++; toast(`Moved ${ok} of ${total}…`); }
+        catch { toast('Could not move one. Press "Check connection" to find out why.'); break; }
+      }
+    } catch { toast('Could not read the pictures on this device.'); }
+    btn.disabled = false; cacheVal = null; await renderGallery(); if (ok) toast(`Moved ${ok} to the shared gallery`);
   }
   async function renderRecent() {
     const all = await loadAllCached(), list = all.slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
@@ -1268,6 +1301,8 @@
     $(id).onchange = e => { galState[k] = e.target.value; store.set(sk, galState[k]); renderGallery(); };
   });
   $('#galFav').onchange = e => { galState.fav = e.target.checked; store.set('gfav', galState.fav); renderGallery(); };
+  $('#galTest').onclick = testCloud;
+  $('#galMove').onclick = moveLocalToCloud;
   $('#clearNonFav').onclick = async () => {
     if (!confirm('Delete everything that is not a favorite?' + (Cloud.on ? ' This removes them for everyone.' : '') + ' This cannot be undone.')) return;
     const all = await loadAll(); for (const r of all) if (!r.favorite) { try { await GS.del(r); } catch { /* skip */ } }

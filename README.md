@@ -117,6 +117,12 @@ window.IRIE_CONFIG = {
 3. Open irie on another phone or browser, enter the passcode, and open the Gallery. You should see the same picture.
 4. In Supabase, **Table Editor → creations** shows a new row, and **Storage → irie** shows a folder with the image files.
 
+### If you can't see your pictures on another device
+1. Open the **Gallery** page. If the note says "Saved on this device only", the shared gallery is not turned on yet: `config.js` is still empty, or GitHub has not updated (wait a minute, then refresh with Ctrl+F5).
+2. If it says "Shared gallery", press **Check connection**. It tells you exactly what is wrong (wrong key, missing table, missing storage).
+3. Pictures you saved **before** turning on the shared gallery stay on the device that saved them. On that device, open the Gallery and press **Move N pictures from this device to the shared gallery**.
+4. Use the same website address on every device. A different address (for example `localhost`) is a different place.
+
 ### If something goes wrong
 - **"Could not reach the shared gallery":** check `config.js` for a typo, a missing quote, or an extra space. Then press F12, open the **Network** tab, save again, and look at the red line. `401` or `403` means the key is wrong or Step 2 was skipped. `404` means the `creations` table is missing. A message about "row-level security" means the policies in Step 2 did not run.
 - **The page still says "Saved on this device only":** `config.js` is still empty or the browser kept the old version. Refresh with Ctrl+F5.
@@ -222,6 +228,11 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.9.3 – 2026-11-21
+- Gallery page: new **Check connection** button for the shared gallery. It tests the table and the file storage and says in plain words what is wrong.
+- New **Move pictures from this device to the shared gallery** button, for pictures saved before sharing was turned on.
+- When sharing is off, the gallery note now says how to turn it on.
 
 ### v0.9.2 – 2026-11-21
 - The home page photo strips now fill themselves with **random pictures from your gallery**, a new random set on every refresh. The manual "Home page pictures" option (Settings and the `home/` folder) is removed.
