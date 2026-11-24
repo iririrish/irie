@@ -158,6 +158,9 @@ grant select, insert, update, delete on public.creations to anon, authenticated;
 
 If it says the key is not valid, copy the key again from **Project Settings → API Keys** into `config.js`.
 
+### "new row violates row-level security policy" when moving
+This happened when an earlier move got part-way and left files behind: putting a file over an existing one needs an extra permission. The app now clears those leftovers first, so just press **Move** again. (Optional extra: running `create policy "change files" on storage.objects for update using (bucket_id = 'irie') with check (bucket_id = 'irie');` in the SQL Editor also allows overwriting.)
+
 ### Moving pictures to the shared gallery
 The **Move** button only appears on the device and browser that still holds unshared pictures. Open irie there, with the same website address you saved them at, and open the Gallery. The line under the title says how many unshared pictures that device has. If a move fails, the line tells you which picture and why.
 
@@ -272,6 +275,9 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.9.6 – 2026-11-21
+- Fix: moving pictures to the shared gallery failed with "new row violates row-level security policy" after an earlier attempt had stopped half-way. The app now removes leftover files first and no longer needs the overwrite permission, so retrying works.
 
 ### v0.9.5 – 2026-11-21
 - Gallery: when the shared gallery is on, a line always says how many pictures on this device are not shared yet, and where to look if there are none.

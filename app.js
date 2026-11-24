@@ -1059,7 +1059,7 @@
     },
     pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
     async upload(path, blob) {
-      const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });
+      const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'false' }), body: blob });
       if (!r.ok) throw new Error('uploading a file failed (' + r.status + ') ' + await this.why(r));
     },
     async why(r) { try { const b = await r.clone().json(); return b.message || b.error || ''; } catch { return ''; } },
@@ -1075,6 +1075,9 @@
     },
     async save(rec) {
       const base = rec.id + '/', orig = [];
+      // an earlier attempt may have left files behind; remove them so a retry starts clean (replacing a file would need an extra permission)
+      const old = [base + 'final.png', base + 'thumb.jpg', ...Array.from({ length: 12 }, (_, i) => `${base}o${i}.jpg`)];
+      try { await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie`, { method: 'DELETE', headers: this.h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: old }) }); } catch { /* nothing to clean */ }
       await this.upload(base + 'final.png', rec.final); await this.upload(base + 'thumb.jpg', rec.thumb);
       const ogs = rec.originals || [];
       for (let i = 0; i < ogs.length; i++) { const p = `${base}o${i}.jpg`; await this.upload(p, ogs[i].blob); orig.push({ path: p, seed: ogs[i].seed }); }
@@ -1243,7 +1246,7 @@
         return;
       }
       const path = '_test/ping-' + Date.now() + '.txt';
-      const up = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: Cloud.h({ 'Content-Type': 'text/plain', 'x-upsert': 'true' }), body: new Blob(['ok'], { type: 'text/plain' }) });
+      const up = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: Cloud.h({ 'Content-Type': 'text/plain', 'x-upsert': 'false' }), body: new Blob(['ok'], { type: 'text/plain' }) });
       if (!up.ok) { out.textContent = `The table works, but saving files failed (error ${up.status}). Run the storage part of the setup SQL (the "irie" bucket and its policies).`; return; }
       await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie`, { method: 'DELETE', headers: Cloud.h({ 'Content-Type': 'application/json' }), body: JSON.stringify({ prefixes: [path] }) });
       out.textContent = 'Connected. The shared gallery works. Pictures saved on any device with this same setup show up here.';
