@@ -330,13 +330,14 @@
   }
 
   /* ---------- pickers ---------- */
-  function buildPicker(el, filter, onPick) {
+  function buildPicker(el, filter, onPick, only) {
     el.innerHTML = '';
-    for (const L of layouts) {
+    for (const L of (only ? layouts.filter(l => only.includes(l.id)) : layouts)) {
       const b = document.createElement('button');
       b.className = 'layout-btn' + (L.id === state.layoutId ? ' on' : '');
       b.disabled = !!filter && !filter(L);
-      if (b.disabled) b.title = 'Needs more photos than you took';
+      b.title = L.name; b.setAttribute('aria-label', L.name); if (SHORT[L.id]) b.dataset.short = SHORT[L.id];
+      if (b.disabled) b.title = L.name + ' (needs more photos than you took)';
       const c = document.createElement('canvas');
       render(c, L, null, { ...state.opts, caption: '', date: false }, 160);
       const t = document.createElement('span'); t.textContent = L.name;
@@ -351,18 +352,63 @@
     refreshPickers();
     if (state.screen === 'edit') { commit(); renderEdit(); renderPhotos(); }
   }
+  const HOME_STYLES = ['plain', 'strip4', 'polaroid', 'film', 'collage'];
+  const SHORT = { plain: 'Photo', strip4: '4-cut', polaroid: 'Polaroid', film: 'Film', collage: 'Collage' };
   function refreshPickers() {
-    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); });
+    buildPicker($('#homeStyles'), null, L => { setLayout(L); startBooth(); }, HOME_STYLES);
     buildPicker($('#boothLayouts'), null, setLayout);
     const have = state.photos.filter(Boolean).length;
     buildPicker($('#editLayouts'), L => L.count <= have, setLayout);
     $('#builtinControls').hidden = !!(cur().frame || cur().noStrip);
   }
+  /* the three strips on the home page. They show your own pictures if you added some (see "Home page photos"). */
+  let homePhotos = [];
+  const HOME_KEY = 'homephotos';
+  const layoutById = id => BUILTIN.find(l => l.id === id);
+  const heroPhotos = n => (homePhotos.length ? Array.from({ length: n }, (_, i) => homePhotos[i % homePhotos.length]) : null);
+  const photoUrl = c => c._url || (c._url = c.toDataURL('image/jpeg', 0.85));
   function buildHero() {
     const o = { ...state.opts, caption: '', date: false, bg: BGS[0] };
-    render($('#heroA'), BUILTIN[0], null, o, 300);
-    render($('#heroB'), polaroid, null, { ...o, bg: BGS[5] }, 300);
-    render($('#heroC'), BUILTIN[1], null, { ...o, bg: BGS[1] }, 300);
+    render($('#heroA'), layoutById('strip4'), heroPhotos(4), o, 300);
+    render($('#heroB'), polaroid, heroPhotos(1), { ...o, bg: BGS[5] }, 300);
+    render($('#heroC'), layoutById('strip3'), heroPhotos(3), { ...o, bg: BGS[1] }, 300);
+    // pixel theme draws its own frames with CSS, so give them the same pictures
+    $$('.px-strip i, .px-polaroid i').forEach((el, i) => {
+      const p = homePhotos.length ? homePhotos[i % homePhotos.length] : null;
+      el.style.background = p ? `url(${photoUrl(p)}) center/cover` : '';
+    });
+  }
+  async function readHomePhotos() {
+    const mine = store.get(HOME_KEY, []);
+    let srcs = mine;
+    if (!srcs.length) {
+      try { const r = await fetch('home/home.json', { cache: 'no-cache' }); if (r.ok) srcs = ((await r.json()).photos || []).map(f => 'home/' + f); } catch { /* optional */ }
+    }
+    const out = [];
+    for (const s of srcs.slice(0, 4)) {
+      try {
+        const img = await loadImg(s), k = Math.min(1, 700 / Math.max(img.naturalWidth, img.naturalHeight));
+        const c = document.createElement('canvas'); c.width = Math.round(img.naturalWidth * k); c.height = Math.round(img.naturalHeight * k);
+        c.getContext('2d').drawImage(img, 0, 0, c.width, c.height); out.push(tag(c));
+      } catch { /* skip a missing picture */ }
+    }
+    return out;
+  }
+  async function refreshHomePhotos() {
+    homePhotos = await readHomePhotos(); buildHero();
+    const box = $('#homePhotoPreview'); box.innerHTML = '';
+    store.get(HOME_KEY, []).forEach(u => { const im = document.createElement('img'); im.src = u; im.alt = 'Your home page picture'; box.append(im); });
+    $('#homePhotoReset').disabled = !store.get(HOME_KEY, []).length;
+  }
+  async function chooseHomePhotos(files) {
+    const list = [];
+    for (const f of files.slice(0, 4)) {
+      const c = await fileToCanvas(f), k = Math.min(1, 700 / Math.max(c.width, c.height)), t = document.createElement('canvas');
+      t.width = Math.round(c.width * k); t.height = Math.round(c.height * k); t.getContext('2d').drawImage(c, 0, 0, t.width, t.height);
+      list.push(t.toDataURL('image/jpeg', 0.82));
+    }
+    try { localStorage.setItem('irie.' + HOME_KEY, JSON.stringify(list)); } catch { toast('Those pictures are too big to save here. Try fewer or smaller ones.'); return; }
+    await refreshHomePhotos(); toast('Home page pictures updated');
   }
 
   /* ---------- toast ---------- */
@@ -1019,9 +1065,15 @@
   };
   /* ---------- shared gallery (optional, Supabase) ---------- */
   const CFG = window.IRIE_CONFIG || {};
+  if (CFG.supabaseUrl) CFG.supabaseUrl = String(CFG.supabaseUrl).trim().replace(/\/+$/, '');
   const Cloud = {
     on: !!(CFG.supabaseUrl && CFG.supabaseKey),
-    h(extra) { return { apikey: CFG.supabaseKey, Authorization: 'Bearer ' + CFG.supabaseKey, ...(extra || {}) }; },
+    // (the URL is cleaned of spaces and a trailing slash below)
+    h(extra) {
+      const k = String(CFG.supabaseKey).trim(), base = { apikey: k };
+      if (k.startsWith('eyJ')) base.Authorization = 'Bearer ' + k;   // older-style keys are sent this way; newer sb_publishable_ keys use apikey only
+      return { ...base, ...(extra || {}) };
+    },
     pub(path) { return `${CFG.supabaseUrl}/storage/v1/object/public/irie/${path}`; },
     async upload(path, blob) {
       const r = await fetch(`${CFG.supabaseUrl}/storage/v1/object/irie/${path}`, { method: 'POST', headers: this.h({ 'Content-Type': blob.type || 'application/octet-stream', 'x-upsert': 'true' }), body: blob });
@@ -1182,13 +1234,22 @@
     showStorage();
   }
   async function renderRecent() {
-    const list = (await loadAll()).slice(0, 4), row = $('#recentRow'); row.innerHTML = '';
-    $('#recentBlock').hidden = !list.length;
-    list.forEach(r => row.append(recCard(r, true)));
+    const all = await loadAll(), list = all.slice(0, 3), row = $('#recentRow'); row.innerHTML = '';
+    $('#recentBlock').hidden = !list.length; $('#recentCount').textContent = '▸ ' + all.length + (all.length === 1 ? ' strip' : ' strips');
+    list.forEach(r => {
+      const b = document.createElement('button'); b.className = 'dock-thumb'; b.setAttribute('aria-label', 'Open the gallery: ' + r.name);
+      const im = document.createElement('img'); im.alt = '';
+      if (r.thumbUrl) im.src = r.thumbUrl; else { const u = URL.createObjectURL(r.thumb); im.src = u; im.onload = () => URL.revokeObjectURL(u); }
+      b.append(im); b.onclick = () => goTo('gallery'); row.append(b);
+    });
+    $('#recentBlock').onclick = () => goTo('gallery');
   }
 
   /* ---------- events ---------- */
   $$('[data-go]').forEach(b => b.addEventListener('click', () => (b.dataset.go === 'booth' ? startBooth() : goTo(b.dataset.go))));
+  $('#homePhotoAdd').onclick = () => $('#homePhotoInput').click();
+  $('#homePhotoInput').onchange = async e => { const fs = [...e.target.files]; e.target.value = ''; if (fs.length) { try { await chooseHomePhotos(fs); } catch { toast('Could not read those pictures.'); } } };
+  $('#homePhotoReset').onclick = async () => { try { localStorage.removeItem('irie.' + HOME_KEY); } catch { /* ignore */ } await refreshHomePhotos(); toast('Using the default pictures'); };
   $('#startBtnHome').onclick = startBooth;
   $('#uploadBtnHome').onclick = () => pickFiles(null);
   $('#uploadFromMsg').onclick = () => pickFiles(null);
@@ -1304,6 +1365,6 @@
 
   /* ---------- start ---------- */
   if (Cloud.on) $('#leadText').textContent = 'Take a few photos, pick a layout, download your strip. Saved pictures go to the shared gallery.';
-  initGL(); buildThemes(); buildPhFx(); buildHero(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers(); renderRecent();
+  initGL(); buildThemes(); buildPhFx(); buildHero(); refreshHomePhotos(); refreshPickers(); loadFrames(); buildAdjust(); renderStickers(); loadStickers(); renderRecent();
   if (!layouts.find(l => l.id === state.layoutId)) state.layoutId = 'plain';
 })();

@@ -1,4 +1,4 @@
-/* irie – passcode screen. This is a casual lock for a personal site, not real security:
+/* irie – passcode page. A casual lock for a personal site, not real security:
    anyone who reads this file can work out the code. Do not rely on it for anything private. */
 (() => {
   const hash = (str, seed = 0) => {
@@ -13,28 +13,49 @@
 
   const KEY = 'irie.pass', root = document.documentElement;
   const read = st => { try { return st.getItem(KEY); } catch { return null; } };
+  const saved = k => { try { return JSON.parse(localStorage.getItem('irie.' + k)); } catch { return null; } };
   const unlocked = () => read(sessionStorage) === PASS_HASH || read(localStorage) === PASS_HASH;
+
+  // use the saved theme right away, so the passcode page already looks right
+  const READY = ['classic', 'pixel', 'night', 'y2k'];   // themes that are built (the others show "Coming soon" in Settings)
+  window.IRIE_SKINS_READY = READY;
+  const skin = READY.includes(saved('skin')) ? saved('skin') : 'classic';
+  root.dataset.skin = skin;
+  if (skin !== 'classic') document.write('<link rel="stylesheet" id="skin-css-' + skin + '" href="themes/' + skin + '.css">');
+  const mode = saved('theme') || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+  root.dataset.theme = mode;
   if (!unlocked()) root.classList.add('locked');
 
   document.addEventListener('DOMContentLoaded', () => {
-    const input = document.getElementById('lockInput'), msg = document.getElementById('lockMsg'), btn = document.getElementById('lockGo'), card = document.querySelector('.lock-card');
-    let tries = 0, waitUntil = 0;
-    const open = remember => {
+    const dots = [...document.querySelectorAll('.lk-dot')], msg = document.getElementById('lockMsg'), card = document.querySelector('.lock-card');
+    const status = document.getElementById('lockStatus');
+    let code = '', tries = 0, waitUntil = 0;
+    const show = () => { dots.forEach((d, i) => d.classList.toggle('on', i < code.length)); status.textContent = code.length + ' of 4 digits entered'; };
+    const open = () => {
+      const remember = document.getElementById('lockRemember').checked;
       try { sessionStorage.setItem(KEY, PASS_HASH); if (remember) localStorage.setItem(KEY, PASS_HASH); } catch { /* ignore */ }
-      root.classList.remove('locked'); input.value = ''; msg.textContent = '';
+      root.classList.remove('locked'); code = ''; show(); msg.textContent = '';
     };
-    const tryCode = () => {
-      const now = Date.now();
-      if (now < waitUntil) { msg.textContent = 'Too many tries. Wait a few seconds.'; return; }
-      if (window.irieHash(input.value.trim()) === PASS_HASH) { open(document.getElementById('lockRemember').checked); return; }
-      tries++; input.value = ''; msg.textContent = 'Wrong passcode. Try again.';
+    const check = () => {
+      if (window.irieHash(code) === PASS_HASH) { open(); return; }
+      tries++; code = ''; show(); msg.textContent = 'Wrong passcode. Try again.';
       card.classList.remove('shake'); void card.offsetWidth; card.classList.add('shake');
-      if (tries >= 5) { waitUntil = now + 30000; tries = 0; msg.textContent = 'Too many tries. Wait 30 seconds.'; }
+      if (tries >= 5) { waitUntil = Date.now() + 30000; tries = 0; msg.textContent = 'Too many tries. Wait 30 seconds.'; }
     };
-    btn.onclick = tryCode;
-    input.addEventListener('keydown', e => { if (e.key === 'Enter') tryCode(); });
-    input.addEventListener('input', () => { if (/^\d{4}$/.test(input.value)) tryCode(); });
+    const press = d => {
+      if (Date.now() < waitUntil) { msg.textContent = 'Too many tries. Wait a few seconds.'; return; }
+      if (code.length >= 4) return;
+      msg.textContent = ''; code += d; show();
+      if (code.length === 4) setTimeout(check, 140);
+    };
+    const back = () => { code = code.slice(0, -1); show(); };
+    document.querySelectorAll('.lk-key[data-k]').forEach(b => { b.onclick = () => press(b.dataset.k); });
+    document.getElementById('lockBack').onclick = back;
+    document.addEventListener('keydown', e => {
+      if (!root.classList.contains('locked')) return;
+      if (/^\d$/.test(e.key)) press(e.key); else if (e.key === 'Backspace') back();
+    });
     document.getElementById('relock').onclick = () => { try { sessionStorage.removeItem(KEY); localStorage.removeItem(KEY); } catch { /* ignore */ } location.reload(); };
-    if (!unlocked()) setTimeout(() => input.focus(), 50);
+    show();
   });
 })();
