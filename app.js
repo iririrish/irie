@@ -396,11 +396,13 @@
   const photoUrl = c => c._url || (c._url = c.toDataURL('image/jpeg', 0.85));
   function buildHero() {
     const o = { ...state.opts, caption: '', date: false, round: false, gap: 12 };
-    render($('#heroA'), layoutById('strip4'), heroSet(0, 4), { ...o, bg: { a: '#e8b4bc' } }, 320);
-    render($('#heroB'), layoutById('strip2'), heroSet(4, 2), { ...o, bg: { a: '#f1f0e8' } }, 320);
-    render($('#heroC'), heroGrid, heroSet(6, 4), { ...o, bg: { a: 'rgba(0,0,0,0)' } }, 360);
-    render($('#heroD'), heroPol, heroSet(2, 1), o, 300);
-    render($('#heroE'), heroPol, heroSet(5, 1), o, 300);
+    const cw = ($('.cluster') && $('.cluster').clientWidth) || 440, dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const wd = f => Math.max(240, Math.min(960, Math.round(cw * dpr * f)));   // each shape is drawn at about the size it is shown
+    render($('#heroA'), layoutById('strip4'), heroSet(0, 4), { ...o, bg: { a: '#e8b4bc' } }, wd(0.3));
+    render($('#heroB'), layoutById('strip2'), heroSet(4, 2), { ...o, bg: { a: '#f1f0e8' } }, wd(0.3));
+    render($('#heroC'), heroGrid, heroSet(6, 4), { ...o, bg: { a: 'rgba(0,0,0,0)' } }, wd(0.46));
+    render($('#heroD'), heroPol, heroSet(2, 1), o, wd(0.3));
+    render($('#heroE'), heroPol, heroSet(5, 1), o, wd(0.3));
     // the pixel theme draws its own frames with CSS, so give them the same pictures
     const fill = (sel, first) => $$(sel).forEach((el, i) => {
       const p = homePhotos.length ? homePhotos[(first + i) % homePhotos.length] : null;
@@ -408,6 +410,8 @@
     });
     fill('.px-strip i', 0); fill('.px-polaroid i', 4);
   }
+  let resizeT;
+  addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(() => { if (state.screen === 'home') buildHero(); }, 250); });
   async function loadRandomPhotos(n = 8) {
     const pool = [];
     (await loadAllCached()).forEach(r => (r.originals || []).forEach(o => pool.push(o)));

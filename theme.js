@@ -6,8 +6,8 @@
     { id: 'pixel', name: 'Pixel Pastel Town', note: 'Pixel city, chunky pixel buttons', sw: 'url(themes/images/pixel-city.jpg) center/cover' },
     { id: 'night', name: 'Night Garden', note: 'Night garden, glass cards, fireflies', sw: 'url(themes/images/night-garden.jpg) center/cover' },
     { id: 'y2k', name: 'Y2K Desktop', note: 'Sparkle grid, windows, bubble buttons', sw: 'url(themes/images/y2k-grid.jpg) center/cover' },
-    { id: 'sticker', name: 'Sticker Book', note: 'Notebook page, tabs, taped photos', sw: 'linear-gradient(135deg,#fff8ec,#ffc2e0)' },
-    { id: 'zine', name: 'Halftone Pop Zine', note: 'Bold collage, halftone dots', sw: 'linear-gradient(135deg,#ff6fb7,#8b5cf6)' }
+    { id: 'sticker', name: 'Sticker Book', note: 'Notebook page, tabs, taped photos', sw: 'url(themes/images/meadow.jpg) center/cover' },
+    { id: 'zine', name: 'Halftone Pop Zine', note: 'Bold collage, halftone dots', sw: 'url(themes/images/halftone.jpg) center/cover' }
   ];
   const READY = window.IRIE_SKINS_READY || ['classic'];
   SKINS.forEach(s => { s.ready = READY.includes(s.id); });

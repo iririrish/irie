@@ -138,16 +138,21 @@ main>#home{flex:1 1 0;min-height:0;display:grid;grid-template-rows:minmax(0,1fr)
 .lead{max-width:46ch;margin:0 0 22px;color:var(--muted)}
 .cta{display:flex;flex-wrap:wrap;gap:12px}
 .flow{margin:18px 0 0;font-size:.95rem;color:var(--muted)}
-.hero-stack{--stack-h:min(54vh,520px);position:relative;display:grid;place-items:center;height:var(--stack-h);min-width:0}
-.cluster{position:relative;width:min(100%,calc(var(--stack-h) * 1.2));aspect-ratio:1.2}   /* one tight group: strip, card, loose photos, two polaroids */
+.hero-stack{--stack-h:min(56vh,540px);position:relative;display:grid;place-items:center;height:var(--stack-h);min-width:0}
+.cluster{position:relative;width:min(100%,calc(var(--stack-h) * 1.2));aspect-ratio:1.2}   /* one group: strip, card, loose photos, two polaroids */
+/* where supported, the group fills whatever space its column has: width-limited on tablets, bigger on large screens */
+@supports (container-type:size) and (width:1cqw){
+  .hero-stack{container-type:size;height:100%;align-self:stretch}
+  .cluster{width:min(100cqw,calc(100cqh * 1.2))}
+}
 .hs{position:absolute;filter:drop-shadow(0 6px 9px rgba(80,40,100,.28))}
 .hs canvas{display:block;height:100%;width:auto}
-.hs-a{left:1%;top:3%;height:92%;transform:rotate(-7deg)}
-.hs-b{left:27%;top:1%;height:68%}
-.hs-b::after{content:"";position:absolute;left:9%;right:9%;bottom:7%;height:8.5%;border-radius:50%;background:#62ab49;box-shadow:0 0 0 3px #62ab49,inset 0 0 0 2px rgba(255,255,255,.9)}
-.hs-c{left:56%;top:3%;height:50%}
-.hs-d{left:40%;top:56%;height:42%;transform:rotate(-7deg)}
-.hs-e{left:62%;top:52%;height:46%;transform:rotate(8deg)}
+/* Five shapes laid out so none overlap: the tall strip on the left, then card + loose photos on top, two polaroids below. Sizes are % of the group. */
+.hs-a{left:1%;top:0;height:100%;transform:rotate(-6deg)}
+.hs-b{left:34%;top:0;height:52%;transform:rotate(2deg)}
+.hs-c{left:65%;top:2%;height:38%;transform:rotate(-1.5deg)}
+.hs-d{left:34%;top:58%;height:40%;transform:rotate(-5deg)}
+.hs-e{left:66.5%;top:58%;height:40%;transform:rotate(6deg)}
 .px,.dock-count,.tb-clock{display:none}
 .home-dock{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:var(--gap);padding:10px 18px;border-radius:var(--r);
   background:var(--glass);border:1px solid var(--glass-line);box-shadow:var(--shadow);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}
@@ -302,7 +307,7 @@ input.gname-edit{flex:1;min-width:0;min-height:var(--ctl-s);padding:0 8px;border
 }
 @media (max-width:860px){
   .home-hero{grid-template-columns:minmax(0,1fr);gap:10px}
-  .hero-stack{--stack-h:max(24vh,130px);order:-1}
+  .hero-stack{--stack-h:clamp(150px,30vh,300px);height:var(--stack-h);align-self:auto;order:-1}
   .home-hero h1{font-size:clamp(2rem,9vw,3rem)}
   .home-dock{border-radius:var(--r-md)}
 }

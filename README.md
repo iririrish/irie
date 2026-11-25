@@ -75,7 +75,7 @@ The strips on the right of the home page show **random pictures from your galler
 
 ## Settings and themes
 
-Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. **Classic Glass** (the default), **Pixel Pastel Town**, **Night Garden** and **Y2K Desktop** are ready. The other two are shown as "Coming soon" and are built in Phase 9. Night Garden is always dark, so the Light / Dark switch has no effect on it.
+Press the gear button in the top bar to open **Settings**. There you can pick a **Theme** and switch between **Light** and **Dark**. The choice is saved on that device, and the passcode page uses it too. All six themes are ready: **Classic Glass** (the default), **Pixel Pastel Town**, **Night Garden**, **Y2K Desktop**, **Sticker Book** and **Halftone Pop Zine**. Night Garden is always dark, so the Light / Dark switch has no effect on it.
 
 ## Shared gallery (optional)
 
@@ -199,7 +199,7 @@ frames/           your photobooth frame designs (PNG) + frames.json
 fx.js             effects engine (WebGL): live camera, thumbnails, editor and download all use it
 lock.js           the passcode page
 theme.js          the theme list and the Settings panel
-themes/           one stylesheet per extra theme (pixel.css, night.css, y2k.css) and theme images (see themes/README.md). The default look lives in style.css
+themes/           one stylesheet per extra theme (pixel.css, night.css, y2k.css, sticker.css, zine.css) and theme images (see themes/README.md). The default look lives in style.css
 stickers/         your own sticker PNGs + stickers.json
 README.md         this file
 ```
@@ -234,10 +234,10 @@ Put transparent PNGs in `stickers/` and list them in `stickers/stickers.json`. S
 
 ## Roadmap
 
-Phases 1 to 8 are done (see above). The next phases are the **kawaii redesign with switchable themes**. Phases 9 and 10 are planned, not built yet.
+Phases 1 to 9 are done (see above). The next phases are the **kawaii redesign with switchable themes**. Phase 10 is planned, not built yet.
 
 ### The six themes (design concepts)
-Ready now: Classic Glass, Pixel Pastel Town, Night Garden and Y2K Desktop. (Candy Bento was tried and removed.)
+All six are ready. (Candy Bento was tried and removed.)
 Picked from the concept boards. The visitor chooses one in **Settings**, and irie remembers it on that device.
 
 1. **Classic Glass** (default): the original pink and purple glass look.
@@ -263,7 +263,7 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 ### Phase 8: Themes 3 and 4 (done: home page, passcode page and Settings)
 - Build **Night Garden** and **Y2K Desktop**.
 
-### Phase 9: Themes 5 and 6
+### Phase 9: Themes 5 and 6 (done: home page, passcode page and Settings)
 - Build **Sticker Book** and **Halftone Pop Zine**.
 
 ### Phase 10: Every page, every theme, polish
@@ -275,6 +275,22 @@ All six keep the same content and features. Only the look, fonts, backgrounds, m
 Custom frame images that switch with each theme, more themes, a portrait-shaped single photo, and an easy backup export of the whole gallery.
 
 ## Changelog
+
+### v0.10.0 – 2026-11-22
+- Phase 9: **Sticker Book** theme. A notebook page with ruled lines, coloured paper tabs along the top, handwritten (Caveat) titles, sticker-style buttons with hard shadows, washi tape on the strip group, and a passcode page with a taped meadow photo.
+- **Halftone Pop Zine** theme. Your halftone image as the background, a dark menu rail down the left, a "saving memories!" sticker, big lowercase headline with pink and purple blocks, bold pop buttons with hard shadows, and a pop-style passcode page. On small screens the rail becomes a top bar.
+- Both have a Light / Dark version, thin scrollbars in their own colours, and are chosen in Settings. All six themes are now ready.
+- New files: `themes/sticker.css`, `themes/zine.css`, `themes/images/meadow.jpg`, `themes/images/halftone.jpg`.
+
+### v0.9.9 – 2026-11-22
+- The home page strip group now **adapts to the device**: it fills the space its column has, so it keeps the same size on tablets, grows on large screens, and scales on phones and portrait tablets.
+- The strips are redrawn at a resolution that matches the screen (and again when the window is resized or the device is turned), so they stay sharp when larger.
+
+### v0.9.8 – 2026-11-22
+- Removed the green oval from the 2-photo card.
+- Home page strips (Classic Glass, Night Garden, Y2K Desktop) are now **laid out so none overlap**: the tall strip on the left, the card and loose photos on top, and the two polaroids below with a clear gap, each slightly tilted.
+- The **4-photo strip is bigger** (full height of the group).
+- **Y2K Desktop:** everything now stays inside the "my strips.png" window, with more padding, closer together, and the polaroids no longer overlap.
 
 ### v0.9.7 – 2026-11-22
 - **New home page strip design** (Classic Glass, Night Garden, Y2K Desktop): a tilted pink 4-photo strip, a cream 2-photo card with a green oval sticker, four loose photos, and two overlapping heart-pattern polaroids, all in one tight group. Pixel Pastel Town keeps its own frames.
