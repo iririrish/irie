@@ -1,0 +1,64 @@
+/* Theme: Sticker Book. A notebook page with paper tabs, taped photos and handwritten titles. Built from concept board 5. */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@600;700&display=swap');
+html[data-skin="sticker"]{--gutter:clamp(14px,3vw,48px);--panel-top:16px;--edge:#4a2a63;--ink:#4a2a63;--muted:#7a5a8a;--pink:#d6338a;--violet:#7c4dff;
+  --glass:#fffdf6;--glass-line:#e8c9d8;--field:#ffffff;--shadow:0 10px 24px rgba(120,60,100,.18);--bg1:#fff8ec;--bg2:#fbe8ef;--r:16px;--paper:#fff8ec;--rule:#f3d9e4}
+html[data-skin="sticker"][data-theme="dark"]{--edge:#f3e8ff;--ink:#f3e8ff;--muted:#d1b7e6;--glass:#3a2a47;--glass-line:#6a5080;--field:#2a1d36;--bg1:#2a1d36;--bg2:#1f1528;--paper:#2f2238;--rule:#3d2d49;--shadow:0 10px 24px rgba(0,0,0,.4)}
+[data-skin="sticker"] body{font-family:"Nunito","DM Sans",sans-serif;color:var(--ink);background:#fbe8ef}
+[data-skin="sticker"][data-theme="dark"] body{background:#1f1528}
+[data-skin="sticker"] h1,[data-skin="sticker"] h2,[data-skin="sticker"] h3{font-family:"Caveat",cursive;font-weight:700}
+[data-skin="sticker"] h2{font-size:1.9rem}[data-skin="sticker"] h3{font-size:1.4rem}
+/* paper tabs along the top, then the notebook page */
+[data-skin="sticker"] .nav{position:static;align-self:stretch;width:auto;max-width:none;margin:16px var(--gutter) 0;padding:0 0 0 18px;background:none;border:0;border-radius:0;box-shadow:none;-webkit-backdrop-filter:none;backdrop-filter:none;align-items:flex-end;gap:0}
+[data-skin="sticker"] .logo{font:700 2.6rem/1 "Caveat",cursive;background:none;-webkit-background-clip:border-box;background-clip:border-box;color:#d6338a;margin:0 26px 4px 0}
+[data-skin="sticker"] .nav nav{margin-left:0;gap:6px;align-items:flex-end}
+[data-skin="sticker"] .nav nav button{min-height:0;padding:10px 22px 14px;border-radius:14px 14px 0 0;color:#4a2a63;font-weight:700;font-size:1rem;box-shadow:inset 0 -4px 0 rgba(0,0,0,.08);transition:transform .18s cubic-bezier(.34,1.56,.64,1)}
+[data-skin="sticker"] .nav nav button:nth-child(1){background:#fff8ec}
+[data-skin="sticker"] .nav nav button:nth-child(2){background:#d8c8ff}
+[data-skin="sticker"] .nav nav button:nth-child(3){background:#bfe6c8}
+[data-skin="sticker"] .nav nav button:hover{transform:translateY(-4px);color:#4a2a63}
+[data-skin="sticker"] .nav nav button.active{box-shadow:inset 0 -5px 0 #d6338a;color:#4a2a63}
+[data-skin="sticker"] #settingsBtn{margin-left:auto}
+[data-skin="sticker"] .icon-btn{margin:0 0 6px 8px;background:#ffd9a8;border:2px solid var(--edge);color:#4a2a63;border-radius:12px}
+[data-skin="sticker"] main{align-self:stretch;width:auto;max-width:none;margin:0 var(--gutter) var(--gap-l);padding:clamp(18px,3vw,44px);
+  background:var(--paper) repeating-linear-gradient(transparent 0 33px,var(--rule) 33px 34px);border-radius:0 24px 24px 24px;box-shadow:0 14px 30px rgba(120,60,100,.18)}
+/* stickers, tape and hard shadows */
+[data-skin="sticker"] .glass,[data-skin="sticker"] .modal-card{background:var(--glass);border:3px solid var(--edge);border-radius:var(--r);box-shadow:4px 4px 0 var(--edge);-webkit-backdrop-filter:none;backdrop-filter:none}
+[data-skin="sticker"] .btn{font-family:"Nunito",sans-serif;font-weight:700;border:3px solid var(--edge);border-radius:14px;color:#4a2a63;background:#fff;box-shadow:4px 4px 0 var(--edge);transition:transform .15s,box-shadow .15s}
+[data-skin="sticker"] .btn.primary{background:#ffc2e0}
+[data-skin="sticker"] .btn:hover:not(:disabled){transform:translate(2px,2px) rotate(-1deg);box-shadow:2px 2px 0 var(--edge)}
+[data-skin="sticker"] .btn:focus-visible,[data-skin="sticker"] button:focus-visible,[data-skin="sticker"] a:focus-visible{outline:3px solid #7c4dff;outline-offset:3px}
+[data-skin="sticker"] .chip.on,[data-skin="sticker"] .tabs button.on,[data-skin="sticker"] .seg button.on{background:#ffc2e0;color:#4a2a63;border-color:var(--edge)}
+[data-skin="sticker"] .home-hero h1{font-weight:700;font-size:clamp(2.6rem,min(7vw,12vh),5.2rem);line-height:.98;letter-spacing:0;margin-bottom:14px}
+[data-skin="sticker"] .hl{padding:0 8px;border-radius:8px}
+[data-skin="sticker"] .hl-pink{background:#ffc2e0;color:#4a2a63}
+[data-skin="sticker"] .hl-purple{background:#d8c8ff;color:#4a2a63}
+[data-skin="sticker"] .tagline{font:700 2.4rem/1 "Caveat",cursive;color:#d6338a;transform:rotate(-2deg);transform-origin:left;order:-1;margin:0 0 6px}
+[data-skin="sticker"] .hero-text{display:flex;flex-direction:column;align-items:flex-start}
+[data-skin="sticker"] .lead{color:var(--ink)}
+[data-skin="sticker"] .flow{font:600 1.9rem/1 "Caveat",cursive;color:var(--ink)}
+[data-skin="sticker"] .home-dock{background:var(--glass);border:3px solid var(--edge);border-radius:14px;box-shadow:4px 4px 0 var(--edge);-webkit-backdrop-filter:none;backdrop-filter:none}
+[data-skin="sticker"] .dock-label{font:600 1.6rem/1 "Caveat",cursive}
+[data-skin="sticker"] .dock-recent .dock-label{background:#bfe6c8;color:#4a2a63;padding:2px 12px;border-radius:10px;transform:rotate(-2deg)}
+[data-skin="sticker"] .dock-thumb{border:2px solid var(--edge);border-radius:4px;background:#fff}
+[data-skin="sticker"] .layout-btn.on,[data-skin="sticker"] .skin.on{border-color:#d6338a}
+/* washi tape on the strip group */
+[data-skin="sticker"] .hs-b::before,[data-skin="sticker"] .hs-c::before,[data-skin="sticker"] .hs-d::before,[data-skin="sticker"] .hs-e::before{
+  content:"";position:absolute;z-index:2;left:30%;top:-3%;width:40%;height:7%;background:rgba(255,194,224,.82);border-inline:3px dotted rgba(255,255,255,.85);transform:rotate(-4deg)}
+[data-skin="sticker"] .hs-c::before{background:rgba(191,230,200,.85)}
+[data-skin="sticker"] .hs-e::before{background:rgba(216,200,255,.85);transform:rotate(5deg)}
+[data-skin="sticker"] *{scrollbar-color:#d6338a transparent}
+[data-skin="sticker"] *::-webkit-scrollbar-thumb{background:#d6338a}
+[data-skin="sticker"] .toast{background:#4a2a63;color:#fff8ec}
+@media (prefers-reduced-motion:reduce){[data-skin="sticker"] .btn,[data-skin="sticker"] .nav nav button{transition:none}}
+/* sticker passcode page: a notebook sheet with a taped photo */
+html[data-skin="sticker"].locked .lock{background:#fbe8ef repeating-linear-gradient(transparent 0 33px,#f3d9e4 33px 34px);color:#4a2a63}
+[data-skin="sticker"] .lock-card{background:#fff8ec;border:3px solid #4a2a63;border-radius:16px;box-shadow:6px 6px 0 #4a2a63;padding:22px 24px 26px}
+[data-skin="sticker"] .lock-card::before{content:"";width:150px;height:105px;background:url(images/meadow.jpg) center/cover;border:8px solid #fff;border-bottom-width:24px;box-shadow:0 6px 14px rgba(0,0,0,.2);transform:rotate(-4deg)}
+[data-skin="sticker"] .lock-card h2{font:700 2.1rem/1 "Caveat",cursive;color:#4a2a63}
+[data-skin="sticker"] .lk-lock{color:#d6338a;width:34px;height:34px}
+[data-skin="sticker"] .lk-dot{border-color:#4a2a63}[data-skin="sticker"] .lk-dot.on{background:#d6338a}
+[data-skin="sticker"] .lk-key{font-family:"Nunito",sans-serif;font-weight:700;color:#4a2a63;background:#ffc2e0;border:3px solid #4a2a63;border-radius:14px;box-shadow:4px 4px 0 #4a2a63}
+[data-skin="sticker"] .lk-key:active{transform:translate(4px,4px);box-shadow:0 0 0 #4a2a63}
+[data-skin="sticker"] .lock-msg{color:#b3155e}
+[data-skin="sticker"] .lk-cloud,[data-skin="sticker"] .lk-heart{display:none}
+@media (max-width:640px){[data-skin="sticker"] .nav{flex-wrap:wrap;padding-left:8px}[data-skin="sticker"] .nav nav{order:3;width:100%}[data-skin="sticker"] main{border-radius:0 0 20px 20px}}

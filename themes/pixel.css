@@ -22,7 +22,8 @@ html[data-skin="pixel"][data-theme="dark"]{--ink:#f4efff;--muted:#c9c4ee;--glass
 [data-skin="pixel"] .hl-purple{background:#cdbbff;color:#3b3f6b}
 [data-skin="pixel"] .lead{font-size:1.45rem;line-height:1.15;color:var(--ink);margin:0 0 20px}
 [data-skin="pixel"] .flow{font-size:1.45rem;margin:18px 0 0}
-[data-skin="pixel"] .hero-stack canvas{display:none}
+[data-skin="pixel"] .cluster{display:none}
+[data-skin="pixel"] .hero-stack{container-type:normal;height:var(--stack-h);align-self:center}
 [data-skin="pixel"] .px{display:block}
 [data-skin="pixel"] .px-strip{position:absolute;left:8%;top:0;width:34%;height:92%;background:#fff;border:4px solid #3b3f6b;box-shadow:8px 8px 0 #3b3f6b;transform:rotate(-5deg);padding:10px;box-sizing:border-box;display:grid!important;gap:8px}
 [data-skin="pixel"] .px-strip i:nth-child(1){background:#ffc4e6}[data-skin="pixel"] .px-strip i:nth-child(2){background:#d8c8ff}
@@ -79,7 +80,7 @@ html[data-skin="pixel"].locked .lock{background:linear-gradient(rgba(255,214,236
   [data-skin="pixel"] .nav nav button{padding:8px 8px}
   [data-skin="pixel"] .home-hero{grid-template-columns:minmax(0,1fr)}
   [data-skin="pixel"] .hero-text{padding:20px}
-  [data-skin="pixel"] .hero-stack{height:22vh;min-height:130px}
+  [data-skin="pixel"] .hero-stack{--stack-h:max(22vh,130px)}
 }
 
 /* "Pick a style" lives in the taskbar and "Recently created" is a badge, like the concept */

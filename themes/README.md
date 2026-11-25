@@ -4,7 +4,7 @@ Each theme is a complete look for irie. The Settings panel (gear button) lists t
 
 Ready now: **Classic Glass** (the default, built into `style.css`) and **Pixel Pastel Town** (`pixel.css`, with `images/pixel-city.jpg`).
 **Night Garden** (`night.css`, always dark) and **Y2K Desktop** (`y2k.css`) are ready too.
-Still "Coming soon": Sticker Book, Halftone Pop Zine.
+**Sticker Book** (`sticker.css`) and **Halftone Pop Zine** (`zine.css`) are ready too. All six themes are done.
 
 When a theme is built (Phases 7 to 9), it adds:
 - `themes/<id>.css` with its colors, fonts, buttons, menu style and animations (ids: `pixel`, `night`, `y2k`, `sticker`, `zine`)
